@@ -1,4 +1,4 @@
-import type { Rect } from "./layout";
+import type { Rect } from "./departments";
 
 /**
  * Move a circle (the player) by (dx, dz) against axis-aligned rectangles.

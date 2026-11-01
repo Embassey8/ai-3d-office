@@ -4,17 +4,17 @@ export const STATUS_META: Record<
   EmployeeStatus,
   { label: string; color: string; description: string }
 > = {
-  idle: { label: "Idle", color: "#94a3b8", description: "No task running." },
-  working: { label: "Working", color: "#34d399", description: "Executing a task." },
-  thinking: { label: "Thinking", color: "#60a5fa", description: "Waiting on the AI model." },
+  idle: { label: "Idle", color: "#8a93a3", description: "No task running." },
+  working: { label: "Working", color: "#3ddc84", description: "Executing a task." },
+  thinking: { label: "Thinking", color: "#f5b841", description: "Waiting on the AI model." },
   waiting_for_approval: {
     label: "Needs approval",
-    color: "#fbbf24",
+    color: "#ff8a3d",
     description: "Paused until the CEO approves an action.",
   },
-  paused: { label: "Paused", color: "#a78bfa", description: "Paused by the CEO." },
-  completed: { label: "Completed", color: "#2dd4bf", description: "Finished the last task." },
-  error: { label: "Error", color: "#f87171", description: "The last task failed." },
+  paused: { label: "Paused", color: "#6c8cff", description: "Paused by the CEO." },
+  completed: { label: "Completed", color: "#7ee2a8", description: "Finished the last task." },
+  error: { label: "Error", color: "#ff5a5f", description: "The last task failed." },
 };
 
 export const ALL_STATUSES = Object.keys(STATUS_META) as EmployeeStatus[];

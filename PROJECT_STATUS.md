@@ -1,8 +1,38 @@
 # Project Status
 
-_Last updated: Milestone 4 (in progress) + Settings → API keys._
+_Last updated: Redesign R1+R2 (chat-first shell + new 3D scene) · Milestone 4 in progress · Settings → API keys._
 
-## Milestone 1 — Foundation: complete
+## REDESIGN (chat-first, from design/) — R1 shell + R2 scene: built and browser-checked in DEMO mode
+
+The old corridor-style office, HUD and employee overlay were **replaced** following `design/DESIGN_SPEC.md` and
+`design/design-source/Main.dc.html`. Built:
+
+- Design tokens (Geist / Geist Mono via the `geist` package, dark palette, status and department colours).
+- App shell: top bar (logo, workspace switcher stub, Office/Tasks/Approvals/Dashboard/Brain tabs with real
+  counts, ⌘K employee palette, status pill, notifications, account menu), left chat panel, 3D scene, docked
+  right employee panel; stacks on narrow screens.
+- Chat panel: team row with live status dots, DM header (model chip), thread built from REAL data in live mode
+  (messages, task cards, approval cards with working Approve/Reject), typing indicator from real status, composer
+  wired to `/api/chat`.
+- 3D scene (React Three Fiber): data-driven `lib/office/departments.ts` (7 rooms on a ring of radius 255 around
+  the Brain, exact design coordinates/colours), roads, Brain (disc, rings, beam, pulsing orb, label with real note
+  count), room kit, low-poly characters whose pose follows the REAL status, status dots, selection ring, HTML room
+  labels, orthographic isometric camera with zoom/pan/fly-to-room, minimap with zoom/fit, third-person mode with
+  WASD walking and collision.
+- Migration 7 (`20261101000007_design_roster.sql`): the design team (Ada, Femi, Zara, Tobi, Nneka, Kai, Iris) and
+  per-employee models for new sign-ups; renames existing seeded employees only if they still have the old default
+  names. **Written and tested locally (102 SQL assertions) but NOT yet applied to the Supabase project.**
+- Verification: typecheck, lint, 75 unit tests, production build; headless-Chromium run of demo mode (no console
+  errors): scene renders, room fly-to, ⌘K → employee DM + docked panel, status preview changes the 3D pose/label,
+  third-person walking.
+
+Not built yet (shown disabled or labelled "coming soon" in the UI — nothing is faked): Tasks / Approvals /
+Dashboard / Brain pages, the department close-up scene (Office.dc.html: 3× room, bookshelf, calendar chip, hire
+placeholder), voice chat (Chat.dc.html), slash commands, file attachments, hiring, workspace switcher, notification
+list and toasts, @mentions, department group channels, the Ada "create task" chat tool. The live (signed-in) path of
+the new UI has not been seen against a real Supabase project (sandbox network block). Characters are primitives.
+
+## Milestone 1 — Foundation: complete (superseded by the redesign above)
 
 Implemented and verified:
 

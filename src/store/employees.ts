@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type { Employee, EmployeeStatus } from "@/lib/employees/types";
 import { SEED_EMPLOYEES } from "@/lib/employees/seed";
-import { findWorkstation } from "@/lib/office/workstations";
 import type { ActivityEntry, ChatMessage, Conversation, PendingApproval, Task } from "@/lib/data/types";
 import { mergeEmployeeRow, type EmployeeRow } from "@/lib/data/mappers";
 
@@ -21,6 +20,10 @@ interface CompanyState {
   conversations: Conversation[];
   messages: Record<string, ChatMessage[]>;
   pendingApprovals: number;
+  /** Shared-memory notes (rows in employee_memories), shown on the Brain label. null = unknown (demo). */
+  memoryCount: number | null;
+  memoryByEmployee: Record<string, number>;
+  costTodayByEmployee: Record<string, number>;
   approvals: PendingApproval[];
   unreadNotifications: number;
   /** Sum of task_executions.cost_usd — an ESTIMATE from list prices. */
@@ -47,6 +50,9 @@ interface CompanyState {
     approvals: PendingApproval[];
     unreadNotifications: number;
     estimatedCostUsd: number;
+    memoryCount: number | null;
+    memoryByEmployee: Record<string, number>;
+    costTodayByEmployee: Record<string, number>;
   }) => void;
   applyEmployeeRow: (row: Partial<EmployeeRow> & { id: string }) => void;
   upsertTask: (task: Task) => void;
@@ -75,19 +81,16 @@ export const useEmployeeStore = create<CompanyState>((set) => ({
   conversations: [],
   messages: {},
   pendingApprovals: 0,
+  memoryCount: null,
+  memoryByEmployee: {},
+  costTodayByEmployee: {},
   approvals: [],
   unreadNotifications: 0,
   estimatedCostUsd: 0,
   selectedId: null,
   focus: null,
 
-  select: (id) =>
-    set((s) => {
-      if (!id) return { selectedId: null, focus: null };
-      const emp = s.employees.find((e) => e.id === id);
-      const desk = emp?.workstationId ? findWorkstation(emp.workstationId) : undefined;
-      return { selectedId: id, focus: desk ? { x: desk.x, z: desk.z } : null };
-    }),
+  select: (id) => set({ selectedId: id, focus: null }),
   clearFocus: () => set({ focus: null }),
   setPreviewStatus: (id, status) =>
     set((s) => {

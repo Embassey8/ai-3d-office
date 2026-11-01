@@ -1,21 +1,57 @@
 @import "tailwindcss";
 
+/* Design tokens — see design/DESIGN_SPEC.md §2 */
 :root {
   color-scheme: dark;
-  --background: #0b1020;
-  --foreground: #e8ecf4;
+  --bg: #0b0d12;
+  --surface-1: #0e1117;
+  --surface-2: #10131a;
+  --surface-3: #151922;
+  --surface-4: #1a1e28;
+  --bubble-me: #262c3a;
+  --text: #eceef2;
+  --text-2: #aeb5c2;
+  --text-3: #8790a0;
+  --primary: #4f5bd5;
+  --primary-text: #8f9bff;
+  --mic-active: #d9443c;
+  --voice-tag: #f2cf63;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-4: var(--surface-4);
+  --color-bubble-me: var(--bubble-me);
+  --color-text-1: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-primary: var(--primary);
+  --color-primary-text: var(--primary-text);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 }
 
 html,
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
+  font-size: 14px;
   overscroll-behavior: none;
+}
+
+a { color: var(--primary-text); }
+
+@keyframes hq-blink { 0%, 100% { opacity: 0.25 } 50% { opacity: 1 } }
+.hq-dot-1 { animation: hq-blink 1.2s infinite }
+.hq-dot-2 { animation: hq-blink 1.2s 0.2s infinite }
+.hq-dot-3 { animation: hq-blink 1.2s 0.4s infinite }
+
+@media (prefers-reduced-motion: reduce) {
+  .hq-dot-1, .hq-dot-2, .hq-dot-3 { animation: none; opacity: 1 }
 }

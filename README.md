@@ -3,7 +3,7 @@
 A 3D virtual company headquarters where a human CEO walks around an office, meets AI employees,
 assigns them tasks and monitors their work.
 
-> **Status:** Milestones 1–2 are complete; Milestone 3 (Supabase backend): database verified on a real project, app-level live flow not yet verified. AI employees and automation are
+> **Status:** chat-first redesign (shell + new 3D HQ) built; earlier milestones 1–2 superseded by it; Milestone 3 (Supabase backend): database verified on a real project, app-level live flow not yet verified. AI employees and automation are
 > not built yet — see [PROJECT_STATUS.md](./PROJECT_STATUS.md).
 
 ## Quick start
@@ -32,8 +32,11 @@ Open http://localhost:3000.
 | `Shift` | Run |
 | Mouse drag | Rotate camera (third-person) |
 | Scroll | Zoom |
-| `C` | Switch third-person / isometric camera |
-| Click an employee | Open their profile panel (`Esc` closes) |
+| `C` | Switch isometric / third-person camera |
+| Click a room / minimap | Fly to a department (`Esc` or "Back to HQ" returns) |
+| Click an employee | Open their DM and profile panel (`Esc` closes) |
+| `⌘K` / `Ctrl+K` | Ask any employee |
+| Drag / scroll (isometric) | Pan / zoom |
 | On-screen pad | Movement on touch devices |
 
 ## Documentation

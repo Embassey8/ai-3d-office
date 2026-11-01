@@ -57,7 +57,8 @@ select test.ok((select count(*) from public.profiles) = 2, 'signup creates a pro
 select test.ok((select count(*) from public.employees where owner_id = 'aaaaaaaa-0000-0000-0000-000000000001') = 7, 'signup seeds 7 employees');
 select test.ok((select count(*) from public.departments where owner_id = 'aaaaaaaa-0000-0000-0000-000000000001') = 6, 'signup seeds 6 departments');
 select test.ok((select count(*) from public.employee_tools where owner_id = 'aaaaaaaa-0000-0000-0000-000000000001') = 19, 'signup grants 19 employee tools');
-select test.ok((select count(distinct workstation_id) from public.employees where owner_id = 'aaaaaaaa-0000-0000-0000-000000000001') = 7, 'every employee has a distinct workstation');
+select test.ok((select string_agg(name, ',' order by slug) from public.employees where owner_id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'Kai,Ada,Iris,Tobi,Femi,Zara,Nneka', 'signup seeds the design roster');
+select test.ok((select model_name from public.employees where owner_id = 'aaaaaaaa-0000-0000-0000-000000000001' and slug = 'support') = 'claude-haiku-5-5', 'Nneka runs on Haiku');
 select test.ok((select bool_and(status = 'idle') from public.employees), 'all employees start idle');
 
 -- Capture ids as admin
@@ -203,7 +204,7 @@ insert into public.tasks (owner_id, employee_id, title) values
 select test.ok((select count(*) from public.claim_next_task('w')) = 0, 'an employee with a running task gets no second task');
 update public.tasks set status = 'completed' where title = 'A seo task';
 select test.ok((select title from public.claim_next_task('w')) = 'seo second', 'next task is claimed once the first one finishes');
-select test.ok((select model_name from public.employees limit 1) = 'claude-opus-5-5', 'employees default to claude-opus-5-5');
+select test.ok((select column_default from information_schema.columns where table_schema = 'public' and table_name = 'employees' and column_name = 'model_name') like '%claude-opus-5-5%', 'new employees default to claude-opus-5-5');
 
 insert into public.approvals (owner_id, employee_id, action_type, description)
 values ('aaaaaaaa-0000-0000-0000-000000000001', (select a_seo from ids), 'other', 'single-use test');

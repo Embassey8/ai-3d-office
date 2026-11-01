@@ -1,5 +1,5 @@
-import { OfficeClient } from "@/components/office/OfficeClient";
+import { AppShell } from "@/components/shell/AppShell";
 
 export default function Home() {
-  return <OfficeClient />;
+  return <AppShell />;
 }

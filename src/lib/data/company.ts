@@ -31,24 +31,34 @@ async function fetchPendingApprovals(sb: SupabaseClient): Promise<PendingApprova
   }));
 }
 
-async function fetchCost(sb: SupabaseClient): Promise<number> {
-  const { data, error } = await sb.from("task_executions").select("cost_usd").limit(5000);
-  if (error) return 0;
-  return (data as { cost_usd: number | string }[]).reduce((sum, r) => sum + Number(r.cost_usd), 0);
+async function fetchCostDetail(sb: SupabaseClient): Promise<{ total: number; todayByEmployee: Record<string, number> }> {
+  const { data, error } = await sb.from("task_executions").select("employee_id, cost_usd, started_at").limit(5000);
+  if (error) return { total: 0, todayByEmployee: {} };
+  const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+  let total = 0;
+  const todayByEmployee: Record<string, number> = {};
+  for (const r of data as { employee_id: string; cost_usd: number | string; started_at: string }[]) {
+    const c = Number(r.cost_usd);
+    total += c;
+    if (new Date(r.started_at) >= dayStart) todayByEmployee[r.employee_id] = (todayByEmployee[r.employee_id] ?? 0) + c;
+  }
+  return { total, todayByEmployee };
 }
+const fetchCost = async (sb: SupabaseClient) => (await fetchCostDetail(sb)).total;
 
 /** Loads everything the office needs. All queries run as the signed-in user, so RLS applies. */
 export async function loadCompany(sb: SupabaseClient) {
   const { data: userData } = await sb.auth.getUser();
-  const [emps, empTools, tasks, activity, convs, counts, estimatedCostUsd, approvals] = await Promise.all([
+  const [emps, empTools, tasks, activity, convs, counts, costDetail, approvals, mem] = await Promise.all([
     sb.from("employees").select("*, departments(name)").order("created_at"),
     sb.from("employee_tools").select("employee_id, enabled, tools(slug)").eq("enabled", true),
     sb.from("tasks").select("*").order("created_at", { ascending: false }).limit(500),
     sb.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(300),
     sb.from("conversations").select("id, employee_id"),
     fetchCounts(sb),
-    fetchCost(sb),
+    fetchCostDetail(sb),
     fetchPendingApprovals(sb),
+    sb.from("employee_memories").select("employee_id").limit(5000),
   ]);
   fail(emps.error, "Loading employees");
   fail(empTools.error, "Loading employee tools");
@@ -75,7 +85,10 @@ export async function loadCompany(sb: SupabaseClient) {
     ...counts,
     pendingApprovals: approvals.length,
     approvals,
-    estimatedCostUsd,
+    estimatedCostUsd: costDetail.total,
+    costTodayByEmployee: costDetail.todayByEmployee,
+    memoryCount: (mem.data ?? []).length,
+    memoryByEmployee: ((mem.data ?? []) as { employee_id: string }[]).reduce<Record<string, number>>((m, r) => { m[r.employee_id] = (m[r.employee_id] ?? 0) + 1; return m; }, {}),
   };
 }
 

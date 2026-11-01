@@ -1,8 +1,10 @@
 # Redesign plan — chat-first Embassey AI HQ
 
 Source of truth: `design/PROJECT_BRIEF.md` (what) and `design/DESIGN_SPEC.md` (how it looks).
-**Status: plan only. No redesign code written yet — waiting for `design/design-source/*.dc.html` and
-`design/references/*.png`, which are needed for exact values.**
+**Status: R1 (shell + tokens) and R2 (3D scene) are built — see PROJECT_STATUS.md. Remaining: department close-up,
+chat-first extras (Ada task tool, slash commands), Tasks/Approvals/Dashboard/Brain pages, voice, live verification.**
+Design sources are in `design/design-source/`. Decisions taken without waiting for answers: reuse demo mode (+ one
+labelled sample thread in `lib/mock`), keep WASD third-person mode with collision, voice deferred.
 
 ## What exists today (inspected)
 A working Next.js 16 app from Milestones 1–4: warm-light corridor-style 3D office, 7 seeded employees, profile

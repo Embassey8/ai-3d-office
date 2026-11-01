@@ -77,13 +77,14 @@ describe("validation", () => {
 });
 
 describe("seed data stays in sync with the SQL seed", () => {
-  const sql = readFileSync("supabase/migrations/20261101000003_seed_and_realtime.sql", "utf8");
-  it("every demo employee appears in the SQL seed with the same slug, name, title and workstation", () => {
+  const sql = readFileSync("supabase/migrations/20261101000007_design_roster.sql", "utf8");
+  it("every demo employee appears in the SQL seed with the same slug, name, title and model", () => {
     for (const e of SEED_EMPLOYEES) {
       expect(sql, e.slug).toContain(`('${e.slug}'`);
       expect(sql, e.name).toContain(`'${e.name}'`);
       expect(sql, e.title).toContain(`'${e.title}'`);
-      expect(sql, e.workstationId ?? "").toContain(`'${e.workstationId}'`);
+      expect(sql, `${e.slug} model`).toContain(`'${e.model.name}'`);
+      expect(sql, `${e.slug} avatar`).toContain(e.appearance.avatar ?? "missing");
     }
   });
   it("every demo tool assignment exists in the SQL employee_tools seed", () => {
