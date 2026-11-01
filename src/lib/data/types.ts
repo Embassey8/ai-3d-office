@@ -49,3 +49,12 @@ export interface Conversation {
 }
 
 export type EmployeeStatusMap = Record<string, EmployeeStatus>;
+
+export interface PendingApproval {
+  id: string;
+  employeeId: string;
+  taskId: string | null;
+  actionType: string;
+  description: string;
+  createdAt: string;
+}

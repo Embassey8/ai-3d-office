@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { Employee, EmployeeStatus } from "@/lib/employees/types";
 import { SEED_EMPLOYEES } from "@/lib/employees/seed";
 import { findWorkstation } from "@/lib/office/workstations";
-import type { ActivityEntry, ChatMessage, Conversation, Task } from "@/lib/data/types";
+import type { ActivityEntry, ChatMessage, Conversation, PendingApproval, Task } from "@/lib/data/types";
 import { mergeEmployeeRow, type EmployeeRow } from "@/lib/data/mappers";
 
 export type DataMode = "loading" | "demo" | "live" | "error";
@@ -21,7 +21,10 @@ interface CompanyState {
   conversations: Conversation[];
   messages: Record<string, ChatMessage[]>;
   pendingApprovals: number;
+  approvals: PendingApproval[];
   unreadNotifications: number;
+  /** Sum of task_executions.cost_usd — an ESTIMATE from list prices. */
+  estimatedCostUsd: number;
   selectedId: string | null;
   /** World point the third-person camera should look at (set when an employee is selected). */
   focus: { x: number; z: number } | null;
@@ -41,7 +44,9 @@ interface CompanyState {
     activity: ActivityEntry[];
     conversations: Conversation[];
     pendingApprovals: number;
+    approvals: PendingApproval[];
     unreadNotifications: number;
+    estimatedCostUsd: number;
   }) => void;
   applyEmployeeRow: (row: Partial<EmployeeRow> & { id: string }) => void;
   upsertTask: (task: Task) => void;
@@ -51,6 +56,8 @@ interface CompanyState {
   addMessage: (msg: ChatMessage) => void;
   addConversation: (c: Conversation) => void;
   setCounts: (c: { pendingApprovals: number; unreadNotifications: number }) => void;
+  setCost: (usd: number) => void;
+  setApprovals: (a: PendingApproval[]) => void;
 }
 
 const MAX_TASKS = 500;
@@ -68,7 +75,9 @@ export const useEmployeeStore = create<CompanyState>((set) => ({
   conversations: [],
   messages: {},
   pendingApprovals: 0,
+  approvals: [],
   unreadNotifications: 0,
+  estimatedCostUsd: 0,
   selectedId: null,
   focus: null,
 
@@ -133,6 +142,8 @@ export const useEmployeeStore = create<CompanyState>((set) => ({
   addConversation: (c) =>
     set((s) => (s.conversations.some((x) => x.id === c.id) ? s : { conversations: [...s.conversations, c] })),
   setCounts: ({ pendingApprovals, unreadNotifications }) => set({ pendingApprovals, unreadNotifications }),
+  setCost: (estimatedCostUsd) => set({ estimatedCostUsd }),
+  setApprovals: (approvals) => set({ approvals, pendingApprovals: approvals.length }),
 }));
 
 /** The status the UI should show: a local preview if one is set, otherwise the real status. */

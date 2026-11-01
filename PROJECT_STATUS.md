@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: Milestone 3._
+_Last updated: Milestone 4 (in progress)._
 
 ## Milestone 1 — Foundation: complete
 
@@ -89,6 +89,21 @@ Honest limitations:
 - The "Demo preview" status selector still exists (local, never saved, clearly labelled).
 - Email confirmation on the new project is at Supabase's default; sign-up shows "check your email".
 
+## Milestone 4 — AI employees: IN PROGRESS (not verified live)
+
+Written and unit-tested (66 tests, typecheck and lint clean) against test doubles only:
+provider abstraction + Claude adapter (default model `claude-opus-5-5`), task runner (agent loop, tool
+permission gateway, single-use approvals, memory, retries/backoff, timeout, cancel/pause, cost estimate,
+activity logging), queue processor, chat reply, `/api/chat`, `/api/worker/tick`,
+`/api/employees/[id]/control`, standalone `npm run worker`, UI wiring (chat, tasks, controls, approve/reject).
+
+**Not done / not verified:** migration `20261101000005_engine_support.sql` is written and passes 79 local SQL
+assertions but has NOT been applied to the Supabase project (the connector's confirmation prompt went
+unanswered). No real Claude API call and no live Supabase call from the app has ever been made (no
+`ANTHROPIC_API_KEY` / `SUPABASE_SERVICE_ROLE_KEY` in this environment; network blocked). Integrations other than
+web search, delegation and memory are not connected; sensitive tools pause for approval and then report that no
+integration is connected. Docs for the engine are still to be written.
+
 ## Known gaps / honest notes
 
 - **shadcn/ui is not initialised yet.** `npx shadcn init` could not reach `ui.shadcn.com` from the
@@ -105,6 +120,6 @@ Honest limitations:
 |---|---|
 | 2 — Office environment | complete (see above) |
 | 3 — Backend (Supabase schema, auth, realtime) | DB verified on real project; app-level live flow unverified (network-blocked, see above) |
-| 4 — AI employees (Claude, chat, tasks, tools, memory) | not started |
+| 4 — AI employees (Claude, chat, tasks, tools, memory) | code written + unit-tested with a fake model; migration 5 NOT yet applied to the Supabase project; never run against the real Claude API or live Supabase (no keys / network blocked) |
 | 5 — Business automation (n8n, approvals, schedules) | not started |
 | 6 — Production readiness | not started |

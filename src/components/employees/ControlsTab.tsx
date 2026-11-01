@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Info, Pause, Play } from "lucide-react";
+import { Bot, Pause, Play } from "lucide-react";
 import type { Employee, EmployeeStatus } from "@/lib/employees/types";
 import { ALL_STATUSES, STATUS_META } from "@/lib/employees/status";
-import { saveEmployeeConfig } from "@/lib/data/company";
+import { ApiError, controlEmployee, saveEmployeeConfig, triggerWorker } from "@/lib/data/company";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { effectiveStatus, useEmployeeStore } from "@/store/employees";
 import { Button } from "@/components/ui/button";
@@ -54,17 +54,30 @@ export function ControlsTab({ employee }: { employee: Employee }) {
   const status = useEmployeeStore((s) => effectiveStatus(s, employee.id));
   const previewing = useEmployeeStore((s) => s.previews[employee.id] !== undefined);
   const setPreviewStatus = useEmployeeStore((s) => s.setPreviewStatus);
+  const live = mode === "live";
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const run = async (fn: () => Promise<string>) => {
+    setBusy(true); setMsg(null); setErr(null);
+    try { setMsg(await fn()); }
+    catch (e) { setErr(e instanceof ApiError || e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100/90">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />
-        <p>Start, pause and resume act on a real execution queue. <span className="text-amber-300">Planned for Milestone 4.</span> Nothing here is simulated.</p>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <Button disabled><Play className="h-4 w-4" /> Start</Button>
-        <Button disabled><Pause className="h-4 w-4" /> Pause</Button>
-        <Button disabled><Play className="h-4 w-4" /> Resume</Button>
+      <div className="space-y-2">
+        <div className="grid grid-cols-3 gap-2">
+          <Button disabled={!live || busy} onClick={() => run(async () => { await triggerWorker(); return "Started: queued tasks are being run."; })}><Play className="h-4 w-4" /> Start</Button>
+          <Button disabled={!live || busy || status === "paused"} onClick={() => run(async () => { await controlEmployee(employee.id, "pause"); return "Paused. No new work will be started."; })}><Pause className="h-4 w-4" /> Pause</Button>
+          <Button disabled={!live || busy || status !== "paused"} onClick={() => run(async () => { await controlEmployee(employee.id, "resume"); return "Resumed. Paused tasks stay paused until you resume them in Tasks."; })}><Play className="h-4 w-4" /> Resume</Button>
+        </div>
+        <p className="text-xs text-slate-400">
+          Start runs this company&rsquo;s queued tasks now. Pause stops this employee from taking new work and pauses their running task.
+        </p>
+        {msg && <p role="status" className="text-xs text-emerald-400">{msg}</p>}
+        {err && <p role="alert" className="text-xs text-red-400">{err}</p>}
       </div>
 
       {mode === "live" ? <ConfigureForm key={employee.id} employee={employee} /> : (

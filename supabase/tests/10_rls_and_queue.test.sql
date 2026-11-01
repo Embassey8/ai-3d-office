@@ -185,6 +185,32 @@ select test.fails($$update public.notifications set title = 'edited'$$, 'A canno
 select test.ok((select count(*) from public.employee_memories) = 1, 'A can read employee memories');
 select test.fails($$insert into public.employee_memories (owner_id, employee_id, content) values ('aaaaaaaa-0000-0000-0000-000000000001', (select a_seo from ids), 'implant')$$, 'A cannot write employee memories');
 
+-- ================= engine support (migration 5) =================
+select test.as_service();
+delete from public.tasks;  -- start from a clean queue
+insert into public.tasks (owner_id, employee_id, title) values
+  ('aaaaaaaa-0000-0000-0000-000000000001', (select a_seo from ids), 'A seo task'),
+  ('bbbbbbbb-0000-0000-0000-000000000002', (select b_seo from ids), 'B seo task');
+select test.ok((select title from public.claim_next_task('w', 'bbbbbbbb-0000-0000-0000-000000000002')) = 'B seo task', 'claim can be scoped to one owner');
+select test.ok((select count(*) from public.claim_next_task('w', 'bbbbbbbb-0000-0000-0000-000000000002')) = 0, 'owner-scoped claim ignores other owners'' tasks');
+update public.employees set status = 'paused' where id = (select a_seo from ids);
+select test.ok((select count(*) from public.claim_next_task('w')) = 0, 'tasks of a paused employee are never claimed');
+update public.employees set status = 'idle' where id = (select a_seo from ids);
+select test.ok((select title from public.claim_next_task('w')) = 'A seo task', 'tasks are claimable again once the employee resumes');
+-- one running task per employee
+insert into public.tasks (owner_id, employee_id, title) values
+  ('aaaaaaaa-0000-0000-0000-000000000001', (select a_seo from ids), 'seo second');
+select test.ok((select count(*) from public.claim_next_task('w')) = 0, 'an employee with a running task gets no second task');
+update public.tasks set status = 'completed' where title = 'A seo task';
+select test.ok((select title from public.claim_next_task('w')) = 'seo second', 'next task is claimed once the first one finishes');
+select test.ok((select model_name from public.employees limit 1) = 'claude-opus-5-5', 'employees default to claude-opus-5-5');
+
+insert into public.approvals (owner_id, employee_id, action_type, description)
+values ('aaaaaaaa-0000-0000-0000-000000000001', (select a_seo from ids), 'other', 'single-use test');
+select test.as_user('aaaaaaaa-0000-0000-0000-000000000001');
+select test.fails($$update public.approvals set consumed_at = now() where description = 'single-use test'$$, 'A cannot mark an approval consumed (server-only)');
+select test.as_admin();
+
 -- ================= cascade =================
 select test.as_admin();
 delete from auth.users where id = 'bbbbbbbb-0000-0000-0000-000000000002';

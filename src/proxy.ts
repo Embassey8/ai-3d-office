@@ -26,6 +26,9 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const signedIn = !!data?.claims;
   const onLogin = request.nextUrl.pathname.startsWith("/login");
+  // API routes do their own authentication (session cookie or CRON_SECRET) and must answer 401/JSON,
+  // not redirect to an HTML page.
+  if (request.nextUrl.pathname.startsWith("/api/")) return response;
 
   if (!signedIn && !onLogin) {
     const url = request.nextUrl.clone();

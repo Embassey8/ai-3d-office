@@ -5,7 +5,7 @@ import { Info } from "lucide-react";
 import type { Employee } from "@/lib/employees/types";
 import type { Task, TaskPriority } from "@/lib/data/types";
 import { canDo, isEditable } from "@/lib/data/schemas";
-import { changeTaskStatus, createTask, editTask } from "@/lib/data/company";
+import { ApiError, changeTaskStatus, createTask, decideApproval, editTask, triggerWorker } from "@/lib/data/company";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { useEmployeeStore } from "@/store/employees";
 import { Badge } from "@/components/ui/badge";
@@ -79,10 +79,35 @@ function TaskRow({ task, live }: { task: Task; live: boolean }) {
   );
 }
 
+function ApprovalCard({ id, description }: { id: string; description: string }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const decide = async (d: "approved" | "rejected") => {
+    const sb = getBrowserClient();
+    if (!sb) return;
+    setBusy(true); setErr(null);
+    try { await decideApproval(sb, id, d); } catch (e) { setErr(e instanceof Error ? e.message : String(e)); setBusy(false); }
+  };
+  return (
+    <li className="space-y-2 rounded-lg border border-amber-400/40 bg-amber-400/5 p-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-amber-300">Needs your approval</p>
+      <p>{description}</p>
+      {err && <p role="alert" className="text-xs text-red-400">{err}</p>}
+      <div className="flex gap-2">
+        <Button variant="primary" disabled={busy} onClick={() => decide("approved")}>Approve</Button>
+        <Button disabled={busy} onClick={() => decide("rejected")}>Reject</Button>
+      </div>
+      <p className="text-[11px] text-slate-400">Approval is single-use and only covers exactly this action.</p>
+    </li>
+  );
+}
+
 export function TasksTab({ employee }: { employee: Employee }) {
   const mode = useEmployeeStore((s) => s.mode);
   const allTasks = useEmployeeStore((s) => s.tasks);
   const live = mode === "live";
+  const allApprovals = useEmployeeStore((s) => s.approvals);
+  const approvals = useMemo(() => allApprovals.filter((a) => a.employeeId === employee.id), [allApprovals, employee.id]);
   const tasks = useMemo(
     () => allTasks.filter((t) => t.employeeId === employee.id).sort((a, b) => ORDER[a.status] - ORDER[b.status] || b.createdAt.localeCompare(a.createdAt)),
     [allTasks, employee.id],
@@ -92,7 +117,19 @@ export function TasksTab({ employee }: { employee: Employee }) {
   const [priority, setPriority] = useState<TaskPriority>("normal");
   const [deadline, setDeadline] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /** Asks the server to start work; failures are explained, never hidden. */
+  const runNow = async () => {
+    setInfo(null);
+    try {
+      await triggerWorker();
+      setInfo("The AI engine has started. Progress appears here and on the employee's avatar as it happens.");
+    } catch (e) {
+      setInfo(e instanceof ApiError && e.status === 503 ? `Saved and queued, but ${e.message} It will wait until the server is configured.` : `Saved and queued, but the engine could not be started: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +140,7 @@ export function TasksTab({ employee }: { employee: Employee }) {
     try {
       await createTask(sb, { employeeId: employee.id, title, description, priority, deadline });
       setTitle(""); setDescription(""); setPriority("normal"); setDeadline("");
+      void runNow();
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : String(e2));
     } finally { setBusy(false); }
@@ -114,7 +152,7 @@ export function TasksTab({ employee }: { employee: Employee }) {
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />
         <p>
           {live
-            ? "Tasks are saved to your database and queue up here. Nothing executes them yet — the AI execution engine arrives in Milestone 4, so they stay queued until then."
+            ? `Tasks are saved, then run by ${employee.name.split(" ")[0]}'s real AI model in the background (one task at a time per employee, with retries and a timeout). Paused or cancelled tasks stop at the next step.`
             : "Demo mode: Supabase is not configured, so tasks cannot be saved. Configure it (see README) to assign tasks."}
         </p>
       </div>
@@ -129,8 +167,17 @@ export function TasksTab({ employee }: { employee: Employee }) {
           <input type="datetime-local" className={input} value={deadline} onChange={(e) => setDeadline(e.target.value)} disabled={!live || busy} aria-label="Deadline" />
         </div>
         {err && <p role="alert" className="text-xs text-red-400">{err}</p>}
+        {info && <p role="status" className="text-xs text-slate-300">{info}</p>}
         <Button type="submit" variant="primary" className="w-full" disabled={!live || busy || !title.trim()}>Assign task</Button>
       </form>
+
+      {approvals.length > 0 && (
+        <ul className="space-y-2">{approvals.map((a) => <ApprovalCard key={a.id} id={a.id} description={a.description} />)}</ul>
+      )}
+
+      {live && tasks.some((t) => t.status === "queued") && (
+        <Button className="w-full" onClick={() => void runNow()}>Run queued tasks now</Button>
+      )}
 
       {tasks.length === 0 ? (
         <p className="py-4 text-center text-slate-400">No tasks for {employee.name.split(" ")[0]} yet.</p>

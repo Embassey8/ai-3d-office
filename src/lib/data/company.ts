@@ -8,7 +8,7 @@ import {
   EmployeeConfigSchema, NewTaskSchema, canDo, isEditable,
   type CeoTaskAction, type NewTaskInput, CEO_TASK_ACTIONS,
 } from "./schemas";
-import type { ChatMessage, Conversation, Task } from "./types";
+import type { Conversation, PendingApproval, Task } from "./types";
 import { useEmployeeStore } from "@/store/employees";
 
 const fail = (error: { message: string } | null, what: string) => {
@@ -23,16 +23,32 @@ async function fetchCounts(sb: SupabaseClient) {
   return { pendingApprovals: a.count ?? 0, unreadNotifications: n.count ?? 0 };
 }
 
+async function fetchPendingApprovals(sb: SupabaseClient): Promise<PendingApproval[]> {
+  const { data, error } = await sb.from("approvals").select("id, employee_id, task_id, action_type, description, created_at").eq("status", "pending").order("created_at");
+  fail(error, "Loading approvals");
+  return ((data ?? []) as { id: string; employee_id: string; task_id: string | null; action_type: string; description: string; created_at: string }[]).map((a) => ({
+    id: a.id, employeeId: a.employee_id, taskId: a.task_id, actionType: a.action_type, description: a.description, createdAt: a.created_at,
+  }));
+}
+
+async function fetchCost(sb: SupabaseClient): Promise<number> {
+  const { data, error } = await sb.from("task_executions").select("cost_usd").limit(5000);
+  if (error) return 0;
+  return (data as { cost_usd: number | string }[]).reduce((sum, r) => sum + Number(r.cost_usd), 0);
+}
+
 /** Loads everything the office needs. All queries run as the signed-in user, so RLS applies. */
 export async function loadCompany(sb: SupabaseClient) {
   const { data: userData } = await sb.auth.getUser();
-  const [emps, empTools, tasks, activity, convs, counts] = await Promise.all([
+  const [emps, empTools, tasks, activity, convs, counts, estimatedCostUsd, approvals] = await Promise.all([
     sb.from("employees").select("*, departments(name)").order("created_at"),
     sb.from("employee_tools").select("employee_id, enabled, tools(slug)").eq("enabled", true),
     sb.from("tasks").select("*").order("created_at", { ascending: false }).limit(500),
     sb.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(300),
     sb.from("conversations").select("id, employee_id"),
     fetchCounts(sb),
+    fetchCost(sb),
+    fetchPendingApprovals(sb),
   ]);
   fail(emps.error, "Loading employees");
   fail(empTools.error, "Loading employee tools");
@@ -57,6 +73,9 @@ export async function loadCompany(sb: SupabaseClient) {
       (c): Conversation => ({ id: c.id, employeeId: c.employee_id }),
     ),
     ...counts,
+    pendingApprovals: approvals.length,
+    approvals,
+    estimatedCostUsd,
   };
 }
 
@@ -68,6 +87,8 @@ export function subscribeRealtime(sb: SupabaseClient, userId: string): () => voi
   const st = () => useEmployeeStore.getState();
   const filter = `owner_id=eq.${userId}`;
   const refreshCounts = () => void fetchCounts(sb).then((c) => st().setCounts(c)).catch(() => {});
+  const refreshApprovals = () => void fetchPendingApprovals(sb).then((a) => st().setApprovals(a)).catch(() => {});
+  const refreshCost = () => void fetchCost(sb).then((c) => st().setCost(c)).catch(() => {});
 
   const channel: RealtimeChannel = sb
     .channel(`office:${userId}`)
@@ -84,7 +105,8 @@ export function subscribeRealtime(sb: SupabaseClient, userId: string): () => voi
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter }, (p) =>
       st().addMessage(mapMessage(p.new as MessageRow)),
     )
-    .on("postgres_changes", { event: "*", schema: "public", table: "approvals", filter }, refreshCounts)
+    .on("postgres_changes", { event: "*", schema: "public", table: "task_executions", filter }, refreshCost)
+    .on("postgres_changes", { event: "*", schema: "public", table: "approvals", filter }, refreshApprovals)
     .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter }, refreshCounts)
     .subscribe();
 
@@ -154,28 +176,52 @@ export async function loadMessages(sb: SupabaseClient, conversationId: string) {
   useEmployeeStore.getState().setMessages(conversationId, ((data ?? []) as MessageRow[]).map(mapMessage));
 }
 
-/** Saves a CEO message (creating the conversation on first use). It does NOT get an AI reply yet. */
-export async function sendMessage(sb: SupabaseClient, employeeId: string, content: string): Promise<ChatMessage> {
+/** Error from one of our API routes, with the server's own explanation. */
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number, readonly code?: string) { super(message); }
+}
+
+async function api<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const json = (await res.json().catch(() => ({}))) as T & { error?: string; code?: string };
+  if (!res.ok) throw new ApiError(json.error ?? `Request failed (${res.status})`, res.status, json.code);
+  return json;
+}
+
+/**
+ * Sends a CEO message to the employee's REAL model through /api/chat. The server saves both the
+ * message and the reply; we then refresh the conversation from the database.
+ */
+export async function sendChat(sb: SupabaseClient, employeeId: string, content: string): Promise<void> {
   const text = content.trim();
   if (!text) throw new Error("Write a message first.");
-  const { data: u } = await sb.auth.getUser();
-  if (!u.user) throw new Error("You are signed out.");
-  const st = useEmployeeStore.getState();
-  let conv = st.conversations.find((c) => c.employeeId === employeeId);
-  if (!conv) {
-    const { data, error } = await sb
-      .from("conversations").insert({ owner_id: u.user.id, employee_id: employeeId }).select("id, employee_id").single();
-    fail(error, "Starting conversation");
-    conv = { id: (data as { id: string }).id, employeeId };
-    st.addConversation(conv);
-    st.setMessages(conv.id, []);
+  let conversationId: string | undefined;
+  try {
+    const out = await api<{ conversationId: string }>("/api/chat", { employeeId, message: text });
+    conversationId = out.conversationId;
+  } finally {
+    // Even when the reply failed the CEO's message may have been saved: re-sync from the database.
+    const st = useEmployeeStore.getState();
+    const { data } = await sb.from("conversations").select("id, employee_id").eq("employee_id", employeeId).order("created_at").limit(1).maybeSingle();
+    const convId = conversationId ?? (data as { id: string } | null)?.id;
+    if (convId) {
+      st.addConversation({ id: convId, employeeId });
+      await loadMessages(sb, convId);
+    }
   }
-  const { data, error } = await sb
-    .from("messages")
-    .insert({ owner_id: u.user.id, conversation_id: conv.id, role: "user", content: text })
-    .select("*").single();
-  fail(error, "Sending message");
-  const msg = mapMessage(data as MessageRow);
-  useEmployeeStore.getState().addMessage(msg);
-  return msg;
+}
+
+/** Asks the server to start running queued tasks (returns immediately; progress arrives via Realtime). */
+export const triggerWorker = () => api<{ accepted: boolean }>("/api/worker/tick");
+
+export const controlEmployee = (employeeId: string, action: "pause" | "resume") =>
+  api<{ status: string }>(`/api/employees/${employeeId}/control`, { action });
+
+/** The CEO's decision on a pending approval. The engine picks it up on the next worker run. */
+export async function decideApproval(sb: SupabaseClient, approvalId: string, decision: "approved" | "rejected", note = "") {
+  const { error } = await sb.from("approvals").update({ status: decision, decision_note: note.trim() || null }).eq("id", approvalId).eq("status", "pending");
+  fail(error, "Could not record your decision");
+  useEmployeeStore.getState().setApprovals(useEmployeeStore.getState().approvals.filter((a) => a.id !== approvalId));
+  // Let the engine resume (approved) or close out (rejected) the waiting task right away.
+  await triggerWorker().catch(() => {});
 }

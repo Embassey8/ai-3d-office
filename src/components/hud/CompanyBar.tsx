@@ -14,6 +14,7 @@ export function CompanyBar() {
   const tasks = useEmployeeStore((s) => s.tasks);
   const approvals = useEmployeeStore((s) => s.pendingApprovals);
   const unread = useEmployeeStore((s) => s.unreadNotifications);
+  const cost = useEmployeeStore((s) => s.estimatedCostUsd);
 
   if (mode === "error") {
     return (
@@ -50,6 +51,10 @@ export function CompanyBar() {
       {stat("Running", count("running") + count("waiting_for_approval"))}
       {stat("Done", count("completed"))}
       {stat("Failed", count("failed"))}
+      <div className="px-3 text-center" title="Estimated from list prices and reported token usage; not an invoice">
+        <div className="text-base font-semibold leading-tight">${cost.toFixed(cost < 1 ? 3 : 2)}</div>
+        <div className="text-[10px] uppercase tracking-wide text-slate-400">Est. AI cost</div>
+      </div>
       <div className="flex items-center gap-1 px-3 text-xs" title="Pending approvals"><ShieldAlert className="h-4 w-4 text-amber-400" aria-hidden />{approvals}</div>
       <div className="flex items-center gap-1 px-3 text-xs" title="Unread notifications"><Bell className="h-4 w-4 text-amber-400" aria-hidden />{unread}</div>
       <form action={signOut} className="px-3">

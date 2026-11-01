@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Info, Send } from "lucide-react";
 import type { Employee } from "@/lib/employees/types";
-import { loadMessages, sendMessage } from "@/lib/data/company";
+import { loadMessages, sendChat } from "@/lib/data/company";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { useEmployeeStore } from "@/store/employees";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ export function ChatTab({ employee }: { employee: Employee }) {
   const live = mode === "live";
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,11 +28,14 @@ export function ChatTab({ employee }: { employee: Employee }) {
     e.preventDefault();
     const sb = getBrowserClient();
     if (!sb) return;
+    const outgoing = text;
     setBusy(true);
     setErr(null);
-    try { await sendMessage(sb, employee.id, text); setText(""); }
+    setPending(outgoing);
+    setText("");
+    try { await sendChat(sb, employee.id, outgoing); }
     catch (e2) { setErr(e2 instanceof Error ? e2.message : String(e2)); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setPending(null); }
   };
 
   return (
@@ -40,8 +44,8 @@ export function ChatTab({ employee }: { employee: Employee }) {
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />
         <p>
           {live
-            ? `Your messages are saved, but ${employee.name.split(" ")[0]} will not answer yet — the AI connection is built in Milestone 4. Nothing here is simulated.`
-            : "Demo mode: Supabase is not configured, so messages cannot be saved."}
+            ? `Messages go to ${employee.name.split(" ")[0]}'s real AI model (${employee.model.name}). Replies can take a few seconds. Chat can only save memories; it cannot take actions — assign a task for that.`
+            : "Demo mode: Supabase is not configured, so chat is unavailable."}
         </p>
       </div>
       {(messages ?? []).length === 0 ? (
@@ -54,6 +58,12 @@ export function ChatTab({ employee }: { employee: Employee }) {
               <time className="text-[10px] text-slate-500" dateTime={m.createdAt}>{new Date(m.createdAt).toLocaleString()}</time>
             </li>
           ))}
+        </ul>
+      )}
+      {pending && (
+        <ul className="space-y-2" aria-live="polite">
+          <li className="ml-8 rounded-lg bg-amber-500/15 p-2.5"><p className="whitespace-pre-wrap">{pending}</p></li>
+          <li className="mr-8 rounded-lg bg-white/5 p-2.5 text-slate-400">{employee.name.split(" ")[0]} is thinking…</li>
         </ul>
       )}
       {err && <p role="alert" className="text-xs text-red-400">{err}</p>}
