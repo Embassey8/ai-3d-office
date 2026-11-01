@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ProviderError } from "@/lib/ai";
-import { getProvider } from "@/lib/ai";
 import { replyToChat } from "@/lib/engine/chat";
-import { SupabaseStore } from "@/lib/engine/supabaseStore";
 import { rateLimit } from "@/lib/server/rateLimit";
-import { createServiceClient, engineConfigOrResponse, requireUser, tooMany } from "@/lib/server/context";
+import { createEngineDeps, engineConfigOrResponse, missingKeyResponse, requireUser, tooMany } from "@/lib/server/context";
 
 export const maxDuration = 120;
 
@@ -24,8 +22,10 @@ export async function POST(req: Request) {
   const { employeeId, message } = parsed.data;
 
   // Check configuration BEFORE saving anything, so a misconfigured server never leaves unanswered messages.
-  const cfg = engineConfigOrResponse({ needAnthropic: true });
+  const cfg = engineConfigOrResponse();
   if ("response" in cfg) return cfg.response;
+  const noKey = await missingKeyResponse(cfg.config, user.id);
+  if (noKey) return noKey;
 
   // Ownership is enforced by RLS: another CEO's employee simply isn't visible.
   const { data: emp } = await sb.from("employees").select("id").eq("id", employeeId).maybeSingle();
@@ -43,9 +43,9 @@ export async function POST(req: Request) {
   if (saved.error) return NextResponse.json({ error: "Could not save your message." }, { status: 500 });
 
   try {
-    const store = new SupabaseStore(createServiceClient(cfg.config));
-    const provider = getProvider("anthropic", { anthropicApiKey: cfg.config.anthropicApiKey });
-    const out = await replyToChat({ store, provider }, { ownerId: user.id, employeeId, conversationId });
+    const deps = createEngineDeps(cfg.config, "chat");
+    const provider = await deps.getProvider("anthropic", user.id);
+    const out = await replyToChat({ store: deps.store, provider }, { ownerId: user.id, employeeId, conversationId });
     return NextResponse.json({ conversationId, reply: out.reply });
   } catch (e) {
     const pe = e instanceof ProviderError ? e : new ProviderError(e instanceof Error ? e.message : String(e), "unknown", false);

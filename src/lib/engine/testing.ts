@@ -126,6 +126,8 @@ export class MemoryStore implements Store {
       .map((t) => ({ task: { ...t }, approvals: this.approvals.filter((a) => a.taskId === t.id) }));
   }
   async requeueStale() { return 0; }
+  secrets = new Map<string, string>();
+  async getSecret(ownerId: string, name: string) { return this.secrets.get(`${ownerId}:${name}`) ?? null; }
 
   async getConversationHistory(conversationId: string, limit: number) { return (this.history.get(conversationId) ?? []).slice(-limit); }
   async addAssistantMessage(m: { conversationId: string; content: string }) {

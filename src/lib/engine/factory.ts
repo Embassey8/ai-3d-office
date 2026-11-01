@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { getProvider } from "@/lib/ai";
+import { getProvider, ProviderError } from "@/lib/ai";
+import { requireAnthropicKey } from "./keys";
 import type { EngineDeps } from "./runTask";
 import { SupabaseStore } from "./supabaseStore";
 
@@ -38,9 +39,14 @@ export function createServiceClient(cfg: EngineConfig) {
 }
 
 export function createEngineDeps(cfg: EngineConfig, workerId: string): EngineDeps {
+  const store = new SupabaseStore(createServiceClient(cfg));
   return {
-    store: new SupabaseStore(createServiceClient(cfg)),
-    getProvider: (name) => getProvider(name, { anthropicApiKey: cfg.anthropicApiKey }),
+    store,
     workerId,
+    getProvider: async (name, ownerId) => {
+      if (name !== "anthropic") throw new ProviderError(`The "${name}" provider is not implemented yet.`, "bad_request", false);
+      const key = await requireAnthropicKey(store, ownerId, cfg.anthropicApiKey);
+      return getProvider(name, { anthropicApiKey: key });
+    },
   };
 }

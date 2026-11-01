@@ -125,6 +125,9 @@ export interface Store {
 
   requeueStale(): Promise<number>;
 
+  /** Decrypted per-owner secret (e.g. the CEO's Anthropic key from Settings), or null. */
+  getSecret(ownerId: string, name: "anthropic_api_key"): Promise<string | null>;
+
   // chat
   getConversationHistory(conversationId: string, limit: number): Promise<ChatMessageRecord[]>;
   addAssistantMessage(m: { ownerId: string; conversationId: string; content: string; metadata?: Record<string, unknown> }): Promise<void>;

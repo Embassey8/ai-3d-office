@@ -5,6 +5,7 @@ import { runTask, type EngineDeps } from "./runTask";
 import { replyToChat } from "./chat";
 import { FakeProvider, MemoryStore, failWith, reply, toolCall } from "./testing";
 import { hashToolCall } from "./tools";
+import { MISSING_KEY_MESSAGE, requireAnthropicKey, resolveAnthropicKey } from "./keys";
 import type { ToolGrant } from "./store";
 
 const OWNER = "owner-1";
@@ -358,5 +359,34 @@ describe("chat", () => {
   it("refuses to chat as an employee of another company", async () => {
     const s = chatSetup(() => reply("hi"));
     await expect(replyToChat({ store: s.store, provider: s.provider }, { ownerId: "owner-2", employeeId: "e-seo", conversationId: "c1" })).rejects.toThrow(/not found/i);
+  });
+});
+
+describe("API key resolution", () => {
+  it("prefers the CEO's saved key, falls back to the server key, and otherwise reports a clear error", async () => {
+    const store = new MemoryStore();
+    store.secrets.set("owner-1:anthropic_api_key", "sk-ant-owner-key");
+    expect(await resolveAnthropicKey(store, "owner-1", "sk-ant-env-key")).toBe("sk-ant-owner-key");
+    expect(await resolveAnthropicKey(store, "owner-2", "sk-ant-env-key")).toBe("sk-ant-env-key");   // never another owner's key
+    expect(await resolveAnthropicKey(store, "owner-2", undefined)).toBeNull();
+    expect(await resolveAnthropicKey(store, "owner-2", "")).toBeNull();
+    await expect(requireAnthropicKey(store, "owner-2")).rejects.toThrow(MISSING_KEY_MESSAGE);
+  });
+
+  it("fails the task with the Settings hint (no retry) when no key exists", async () => {
+    const s = setup();
+    s.deps.getProvider = async (_n, ownerId) => { await requireAnthropicKey(s.store, ownerId); return s.p; };
+    const task = await claim(s);
+    expect(await runTask(s.deps, task)).toBe("failed");
+    expect(s.store.tasks.get(task.id)!.error).toContain("Settings");
+    expect(s.store.executions).toHaveLength(0);       // never reached the model
+  });
+
+  it("resolves the provider per owner, so each CEO's own key is used", async () => {
+    const s = setup();
+    const seen: string[] = [];
+    s.deps.getProvider = async (_n, ownerId) => { seen.push(ownerId); return s.p; };
+    await runTask(s.deps, await claim(s));
+    expect(seen).toEqual([OWNER]);
   });
 });

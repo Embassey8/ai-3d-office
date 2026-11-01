@@ -3,7 +3,8 @@
  *
  *   npm run worker
  *
- * Required env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY
+ * Required env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ * Optional env: ANTHROPIC_API_KEY (fallback only: each CEO normally saves their own key in Settings)
  * Optional env: WORKER_POLL_MS (default 5000), WORKER_ID
  *
  * It polls the same queue as the web app's /api/worker/tick route. Claiming uses SELECT … FOR UPDATE
@@ -18,8 +19,7 @@ if (!cfg.ok) {
   process.exit(1);
 }
 if (!cfg.config.anthropicApiKey) {
-  console.error("[worker] ANTHROPIC_API_KEY is required");
-  process.exit(1);
+  console.warn("[worker] no ANTHROPIC_API_KEY in the environment: using the keys CEOs saved in Settings (tasks for owners without a key will fail with a clear message)");
 }
 
 const workerId = process.env.WORKER_ID ?? `worker-${process.pid}`;

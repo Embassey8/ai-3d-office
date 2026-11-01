@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Embassey AI HQ — Voice chat with Kai</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#0B0D12}
+a{color:#8F9BFF}a:hover{color:#B7C0FF}
+.w3d sc-for,.w3d sc-if{display:contents}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.orb{animation:breathe 2.4s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.wv{animation:wave 1s ease-in-out infinite;transform-origin:50% 50%}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #0B0D12; color: #ECEEF2; font-family: Geist, system-ui, sans-serif; font-size: 14px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 16px; min-height: 56px; box-sizing: border-box; background: #0E1117; border-bottom: 1px solid rgba(255,255,255,0.07)">
+  <div style="display: flex; align-items: center; gap: 10px; flex: 1 1 260px">
+    <div style="width: 30px; height: 30px; border-radius: 9px; background: #4F5BD5; display: flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="8" stroke-opacity="0.55"></circle></svg>
+    </div>
+    <span style="font-weight: 600; font-size: 15px">Embassey AI HQ</span>
+    <span style="color: #5D6575">/</span>
+    <a href="Main.dc.html" style="color: #AEB5C2; text-decoration: none; font-size: 13px">Office</a>
+    <span style="color: #5D6575">/</span>
+    <span style="font-size: 13px; display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #2F8F5A"></span>Engineering</span>
+  </div>
+  <nav aria-label="Primary" style="display: flex; gap: 2px; padding: 3px; border-radius: 10px; background: #151922; border: 1px solid rgba(255,255,255,0.06)">
+    <a href="Main.dc.html" aria-current="page" style="padding: 7px 14px; border-radius: 7px; background: #262C3A; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 500">Office</a>
+    <a href="#" style="padding: 7px 14px; border-radius: 7px; color: #AEB5C2; text-decoration: none; font-size: 13px">Tasks</a>
+    <a href="#" style="padding: 7px 14px; border-radius: 7px; color: #AEB5C2; text-decoration: none; font-size: 13px">Approvals</a>
+    <a href="#" style="padding: 7px 14px; border-radius: 7px; color: #AEB5C2; text-decoration: none; font-size: 13px">Dashboard</a>
+    <a href="#" style="padding: 7px 14px; border-radius: 7px; color: #AEB5C2; text-decoration: none; font-size: 13px">Brain</a>
+  </nav>
+  <div style="display: flex; align-items: center; gap: 10px; flex: 1 1 260px; justify-content: flex-end">
+    <div style="display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 9px; background: #10241A; border: 1px solid #1F4A32; font-size: 13px; color: #BFF0D2"><span style="width: 7px; height: 7px; border-radius: 50%; background: #3DDC84"></span>7 employees · 4 working</div>
+    <button aria-label="Account: Emmanuel Bassey, CEO" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid #2A3044; background: #E8D5B5; color: #2A1E10; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer">EB</button>
+  </div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1 1 auto">
+
+<aside aria-label="Chat with Kai" style="flex: 1 1 440px; height: 844px; display: flex; flex-direction: column; background: #0F1218; border-right: 1px solid rgba(255,255,255,0.07); min-width: 0">
+  <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06)">
+    <div style="position: relative; width: 38px; height: 38px; border-radius: 50%; background: #3FA56B; color: #0B0D12; font-weight: 700; display: flex; align-items: center; justify-content: center">K<span style="position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #3DDC84; border: 2px solid #0F1218"></span></div>
+    <div style="flex: 1; min-width: 0">
+      <div style="font-weight: 600">Kai <span style="font-weight: 400; color: #8790A0">· Software Developer</span></div>
+      <div style="font-size: 12px; color: #9AA3B2">Engineering · Claude Opus · 6 tools</div>
+    </div>
+    <div role="tablist" aria-label="Kai" style="display: flex; gap: 2px; padding: 3px; border-radius: 9px; background: #151922">
+      <button role="tab" aria-selected="true" style="height: 28px; padding: 0 10px; border-radius: 6px; border: none; background: #262C3A; color: #FFFFFF; font: inherit; font-size: 12px; cursor: pointer">Chat</button>
+      <button role="tab" aria-selected="false" style="height: 28px; padding: 0 10px; border-radius: 6px; border: none; background: transparent; color: #AEB5C2; font: inherit; font-size: 12px; cursor: pointer">Tasks</button>
+      <button role="tab" aria-selected="false" style="height: 28px; padding: 0 10px; border-radius: 6px; border: none; background: transparent; color: #AEB5C2; font: inherit; font-size: 12px; cursor: pointer">Activity</button>
+    </div>
+  </div>
+
+  <div style="flex: 1 1 auto; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; line-height: 1.5; opacity: 0.55">
+    <div style="align-self: flex-end; max-width: 82%; padding: 10px 13px; border-radius: 14px 14px 4px 14px; background: #262C3A">Kai, where are we on the pricing page bug?</div>
+    <div style="display: flex; gap: 10px">
+      <div style="flex: none; width: 26px; height: 26px; border-radius: 50%; background: #3FA56B; color: #0B0D12; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">K</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; color: #DDE1E8">
+        <div>Fixed. The currency toggle was rounding NGN prices to the nearest thousand. The patch is live on staging.</div>
+        <div style="border: 1px solid rgba(255,255,255,0.09); background: #151922; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px">
+          <div style="display: flex; justify-content: space-between; font-family: 'Geist Mono', monospace; font-size: 11px; color: #8790A0; letter-spacing: 0.06em"><span>RAN 5 STEPS</span><span>2m 14s</span></div>
+          <div style="display: flex; gap: 8px; align-items: center"><span style="color: #3DDC84">✓</span>Read <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #C9D0FF">app/pricing/page.tsx</span></div>
+          <div style="display: flex; gap: 8px; align-items: center"><span style="color: #3DDC84">✓</span>Edited <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #C9D0FF">lib/currency.ts</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #7EE2A8">+12</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #FF8A80">−4</span></div>
+          <div style="display: flex; gap: 8px; align-items: center"><span style="color: #3DDC84">✓</span>Ran test suite · all passing</div>
+          <div style="display: flex; gap: 8px; align-items: center"><span style="color: #3DDC84">✓</span>Deployed to staging</div>
+          <div style="display: flex; gap: 8px; align-items: center"><span style="color: #FF8A3D">●</span>Production deploy · waiting for you</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 20px 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 14px; border-top: 1px solid rgba(255,255,255,0.06); background: #0C0F14">
+    <div class="orb" style="width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #E6E8FF 0%, #A9B2FF 18%, #6C6FE8 48%, #7A3FB5 78%, #2E1F5C 100%); box-shadow: 0 0 60px rgba(108,111,232,0.45), 0 0 140px rgba(122,63,181,0.25)"></div>
+    <div style="font-family: 'Geist Mono', monospace; font-size: 12px; letter-spacing: 0.3em; color: #C9CED8">LISTENING</div>
+    <div style="display: flex; gap: 8px; width: 100%">
+      <button style="flex: 1; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: #151922; color: #E3E6EC; font: inherit; font-size: 12px; cursor: pointer">Approve prod deploy</button>
+      <button style="flex: 1; height: 34px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: #151922; color: #E3E6EC; font: inherit; font-size: 12px; cursor: pointer">Show the diff</button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; width: 100%">
+      <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; box-sizing: border-box; border-radius: 14px; background: #171B24; border: 1.5px solid #8E3B36">
+        <div aria-hidden="true" style="display: flex; align-items: center; gap: 2px; height: 22px">
+          <span class="wv" style="width: 2px; height: 10px; border-radius: 1px; background: #FF8A80"></span>
+          <span class="wv" style="width: 2px; height: 20px; border-radius: 1px; background: #FF8A80; animation-delay: .1s"></span>
+          <span class="wv" style="width: 2px; height: 14px; border-radius: 1px; background: #FF8A80; animation-delay: .2s"></span>
+          <span class="wv" style="width: 2px; height: 22px; border-radius: 1px; background: #FF8A80; animation-delay: .3s"></span>
+          <span class="wv" style="width: 2px; height: 12px; border-radius: 1px; background: #FF8A80; animation-delay: .4s"></span>
+          <span class="wv" style="width: 2px; height: 18px; border-radius: 1px; background: #FF8A80; animation-delay: .5s"></span>
+          <span class="wv" style="width: 2px; height: 9px; border-radius: 1px; background: #FF8A80; animation-delay: .6s"></span>
+        </div>
+        <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ECEEF2">Hey Kai, ship the pricing fix to prod and</span>
+      </div>
+      <button aria-label="Stop listening" style="flex: none; width: 50px; height: 50px; border-radius: 14px; border: none; background: #D9443C; color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px rgba(217,68,60,0.25)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg></button>
+      <button aria-label="Send" style="flex: none; width: 50px; height: 50px; border-radius: 14px; border: none; background: #4F5BD5; color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg></button>
+    </div>
+  </div>
+</aside>
+
+<main aria-label="Engineering room, 3D view" style="flex: 999 1 520px; min-width: 0; height: 844px; position: relative; overflow: hidden; background: radial-gradient(1.2px 1.2px at 15% 25%, rgba(255,255,255,0.4) 50%, transparent 55%), radial-gradient(1.2px 1.2px at 75% 85%, rgba(255,255,255,0.35) 50%, transparent 55%), radial-gradient(1.2px 1.2px at 88% 30%, rgba(255,255,255,0.35) 50%, transparent 55%), radial-gradient(ellipse 70% 60% at 55% 60%, #13201B 0%, #0C0F14 75%)">
+  <div class="w3d" style="{{worldS}}">
+    <sc-for list="{{faces}}" as="f" hint-placeholder-count="0">
+      <div style="{{f.s}}"></div>
+    </sc-for>
+
+    <div style="{{boardS}}">
+      <div style="position: absolute; inset: 8px 10px; font-family: 'Geist Mono', monospace; font-size: 7px; line-height: 1.6; color: #2B3A33">
+        <div style="font-weight: 500; letter-spacing: 0.1em">SPRINT 14</div>
+        <div>✓ auth refactor</div>
+        <div>✓ pricing-fix → staging</div>
+        <div style="color: #B4532A">● prod deploy · approval</div>
+      </div>
+    </div>
+
+    <sc-for list="{{plants}}" as="p" hint-placeholder-count="0">
+      <div style="{{p.s}}">
+        <div style="position: absolute; left: -16px; bottom: 0; width: 32px; height: 46px">
+          <div style="position: absolute; left: 7px; bottom: 0; width: 18px; height: 15px; border-radius: 2px 2px 5px 5px; background: #F1EFEA"></div>
+          <div style="position: absolute; left: 0; top: 4px; width: 21px; height: 21px; border-radius: 50%; background: #3E9A5C"></div>
+          <div style="position: absolute; left: 11px; top: 0; width: 21px; height: 21px; border-radius: 50%; background: #4FB06C"></div>
+          <div style="position: absolute; left: 5px; top: 12px; width: 22px; height: 20px; border-radius: 50%; background: #2F8A4E"></div>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="{{kaiS}}">
+      <div style="position: absolute; left: -16px; bottom: 0; width: 32px; height: 56px">
+        <div style="position: absolute; left: 4px; top: 2px; width: 24px; height: 24px; border-radius: 50%; background: #121212"></div>
+        <div style="position: absolute; left: 1px; top: 0; width: 30px; height: 18px; border-radius: 15px 15px 0 0; border: 3px solid #E9EBEF; border-bottom: none; box-sizing: border-box"></div>
+        <div style="position: absolute; left: -1px; top: 12px; width: 6px; height: 10px; border-radius: 3px; background: #E9EBEF"></div>
+        <div style="position: absolute; left: 27px; top: 12px; width: 6px; height: 10px; border-radius: 3px; background: #E9EBEF"></div>
+        <div style="position: absolute; left: 0; top: 22px; width: 32px; height: 34px; border-radius: 14px 14px 5px 5px; background: #3B4256"></div>
+      </div>
+    </div>
+    <div style="{{chairS}}">
+      <div style="position: absolute; left: -16px; bottom: 0; width: 32px; height: 32px">
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 22px; border-radius: 8px; background: #2A2E38"></div>
+        <div style="position: absolute; left: 15px; top: 21px; width: 3px; height: 8px; background: #1B1E25"></div>
+        <div style="position: absolute; left: 5px; top: 28px; width: 22px; height: 3px; border-radius: 2px; background: #1B1E25"></div>
+      </div>
+    </div>
+
+    <div style="{{kaiChipS}}">
+      <div style="position: absolute; left: -76px; bottom: 0; width: 152px; padding: 7px 9px; box-sizing: border-box; border-radius: 10px; background: rgba(15,18,26,0.95); border: 1px solid #3DDC84">
+        <div style="font-size: 11px; font-weight: 600; color: #FFFFFF">Kai · Software Developer</div>
+        <div style="display: flex; align-items: center; gap: 5px; font-family: 'Geist Mono', monospace; font-size: 9px; color: #BFF0D2; margin-top: 2px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #3DDC84; box-shadow: 0 0 6px #3DDC84"></span>Listening to you</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; right: 16px; top: 16px; display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 17px; background: rgba(15,18,26,0.92); border: 1px solid rgba(255,255,255,0.1); font-size: 13px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3DDC84; box-shadow: 0 0 8px #3DDC84"></span>Kai · listening</div>
+
+  <div style="position: absolute; left: 32px; top: 40px; right: 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; pointer-events: none">
+    <span style="padding: 7px 16px; border-radius: 18px; background: #F2CF63; color: #1A1508; font-family: 'Geist Mono', monospace; font-size: 15px; font-weight: 500; letter-spacing: 0.1em">EMMANUEL · VOICE</span>
+    <div style="font-size: 48px; font-weight: 800; line-height: 1.04; letter-spacing: -0.01em; text-transform: uppercase; text-shadow: 0 4px 24px rgba(0,0,0,0.6)">
+      <div style="color: #9EA6B8">Hey Kai,</div>
+      <div style="color: #FFFFFF">ship the pricing fix</div>
+    </div>
+  </div>
+
+  <div style="position: absolute; right: 16px; bottom: 16px; width: 300px; max-width: calc(100% - 32px); padding: 14px; box-sizing: border-box; border-radius: 14px; background: rgba(15,18,26,0.95); border: 1px solid rgba(255,255,255,0.09); display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #8790A0"><span>KAI'S PLAN</span><span>T-0192</span></div>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 13px"><span style="width: 20px; height: 20px; border-radius: 50%; background: #16301F; color: #3DDC84; font-size: 11px; display: flex; align-items: center; justify-content: center">✓</span>Run tests on main</div>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 13px"><span style="width: 20px; height: 20px; border-radius: 50%; background: #16301F; color: #3DDC84; font-size: 11px; display: flex; align-items: center; justify-content: center">✓</span>Verify staging preview</div>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 13px"><span style="width: 20px; height: 20px; border-radius: 50%; background: #34200F; color: #FF8A3D; font-size: 11px; display: flex; align-items: center; justify-content: center">3</span>Deploy to production<span style="margin-left: auto; font-size: 11px; color: #FFC6A0">needs approval</span></div>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 13px; color: #9AA3B2"><span style="width: 20px; height: 20px; border-radius: 50%; background: #1A1E28; font-size: 11px; display: flex; align-items: center; justify-content: center">4</span>Post release note to #all-hands</div>
+  </div>
+
+  <div style="position: absolute; left: 16px; bottom: 16px; padding: 8px 12px; border-radius: 10px; background: rgba(15,18,26,0.9); border: 1px dashed rgba(255,255,255,0.18); font-family: 'Geist Mono', monospace; font-size: 11px; color: #C9CED8; letter-spacing: 0.08em; transform: none">SUB-AGENT BAY · READY</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"zoom":{"editor":"range","default":1.25,"min":0.7,"max":2,"step":0.05,"section":"Scene"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const zoom = this.props.zoom ?? 1.25;
+    const rx = 60, rz = -45;
+    const sh = (hex, f) => {
+      const n = parseInt(hex.slice(1), 16);
+      const t = f < 0 ? 0 : 255, p = Math.abs(f);
+      const m = (c) => Math.round((t - c) * p + c);
+      return 'rgb(' + m(n >> 16) + ',' + m((n >> 8) & 255) + ',' + m(n & 255) + ')';
+    };
+    const faces = [];
+    const P = (x, y, w, h) => 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px;';
+    const fl = (x, y, w, d, z, bg, more) => faces.push({ s: P(x, y, w, d) + 'transform:translateZ(' + z + 'px);background:' + bg + ';' + (more || '') });
+    const wyS = (x, y, w, h, z) => P(x, y - h, w, h) + 'transform-origin:50% 100%;transform:translateZ(' + z + 'px) rotateX(-90deg);';
+    const wy = (x, y, w, h, z, bg, more) => faces.push({ s: wyS(x, y, w, h, z) + 'background:' + bg + ';' + (more || '') });
+    const wx = (x, y, d, h, z, bg, more) => faces.push({ s: P(x - h, y, h, d) + 'transform-origin:100% 50%;transform:translateZ(' + z + 'px) rotateY(90deg);background:' + bg + ';' + (more || '') });
+    const box = (x, y, w, d, h, z, c, more) => { fl(x, y, w, d, z + h, c, more); wy(x, y + d, w, h, z, sh(c, -0.16)); wx(x, y, d, h, z, sh(c, -0.32)); };
+    const bb = (x, y, z) => 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:0;height:0;transform:translateZ(' + z + 'px) rotateZ(' + (-rz) + 'deg) rotateX(' + (-rx) + 'deg);';
+
+    const wall = '#2F8F5A';
+    box(40, 40, 420, 340, 12, -12, '#287A4D', 'box-shadow:0 0 0 1.5px ' + sh(wall, 0.3) + ',0 0 50px ' + wall + '77;');
+    fl(120, 280, 300, 90, 0.4, 'transparent', 'border:2px dashed rgba(200,240,215,.45);border-radius:6px;box-sizing:border-box;');
+    fl(100, 130, 260, 140, 0.5, '#ADDDC0', 'opacity:.35;border-radius:8px;');
+    wy(40, 40, 420, 100, 0, sh(wall, 0.06), 'box-shadow:inset 0 4px 0 ' + sh(wall, 0.45) + ';');
+    wx(460, 40, 340, 100, 0, sh(wall, -0.22), 'box-shadow:inset 4px 0 0 ' + sh(wall, 0.35) + ';');
+    wx(459.4, 90, 160, 54, 30, 'linear-gradient(90deg,rgba(255,255,255,.35) 0 2px,transparent 2px) 0 0/40px 100%,linear-gradient(180deg,#A9CBEA,#5F86B5)', 'box-shadow:inset 0 0 0 3px #E4EEE8;');
+
+    box(150, 160, 170, 56, 24, 0, '#EEECE7');
+    const mon = (x, w, tint) => wy(x, 170, w, 30, 24, '#141925', 'box-shadow:inset 0 0 0 2px #2A3142,0 0 14px ' + wall + '99;background:repeating-linear-gradient(180deg,transparent 0 5px,' + tint + ' 5px 6px) 6px 6px/62% 70% no-repeat,#141925;');
+    mon(160, 46, 'rgba(126,226,168,.6)');
+    mon(212, 46, 'rgba(201,208,255,.55)');
+    mon(264, 46, 'rgba(255,198,160,.55)');
+    fl(212, 190, 46, 11, 24.6, '#D3CFC6', 'border-radius:2px;');
+
+    box(400, 70, 40, 34, 78, 0, '#1C2230');
+    [12, 26, 40, 54, 68].forEach((z) => wy(402, 104.4, 36, 3, z, '#3DDC84', 'opacity:.75;box-shadow:0 0 6px #3DDC84;'));
+
+    fl(205, 222, 66, 66, 0.9, 'transparent', 'border-radius:50%;box-shadow:0 0 0 2.5px #3DDC84,0 0 22px #3DDC84;');
+
+    return {
+      faces,
+      plants: [{ s: bb(438, 360, 0) }, { s: bb(64, 64, 0) }, { s: bb(64, 356, 0) }],
+      worldS: 'position:absolute;left:50%;top:50%;width:500px;height:420px;margin:-210px 0 0 -250px;transform-style:preserve-3d;transform:translate(40px,120px) scale(' + zoom + ') rotateX(' + rx + 'deg) rotateZ(' + rz + 'deg);',
+      boardS: wyS(110, 40.8, 120, 60, 26) + 'background:#F4F6F2;border-radius:3px;box-shadow:0 0 0 3px #CFD6D0;',
+      kaiS: bb(238, 252, 0),
+      chairS: bb(238, 260, 0),
+      kaiChipS: bb(238, 252, 72)
+    };
+  }
+}
+</script>
+</body>
+</html>

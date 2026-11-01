@@ -1,7 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { processQueue } from "@/lib/engine/queue";
 import { rateLimit } from "@/lib/server/rateLimit";
-import { createEngineDeps, engineConfigOrResponse, requireUser, secretMatches, tooMany } from "@/lib/server/context";
+import { createEngineDeps, engineConfigOrResponse, missingKeyResponse, requireUser, secretMatches, tooMany } from "@/lib/server/context";
 
 /** Long enough for several tasks; Vercel enforces its own plan ceiling on top of this. */
 export const maxDuration = 300;
@@ -24,9 +24,13 @@ async function handle(req: Request) {
     ownerId = auth.user.id;
   }
 
-  // Without an API key tasks would just fail; leave them queued and say why.
-  const cfg = engineConfigOrResponse({ needAnthropic: true });
+  const cfg = engineConfigOrResponse();
   if ("response" in cfg) return cfg.response;
+  // Without a key tasks would just fail; leave them queued and say why. (Cron callers are not checked per owner.)
+  if (ownerId) {
+    const noKey = await missingKeyResponse(cfg.config, ownerId);
+    if (noKey) return noKey;
+  }
 
   const deps = createEngineDeps(cfg.config, `vercel-${Math.random().toString(36).slice(2, 8)}`);
   after(async () => {

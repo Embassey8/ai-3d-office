@@ -8,7 +8,8 @@ import { hashToolCall, resolveTools, type ToolContext } from "./tools";
 
 export interface EngineDeps {
   store: Store;
-  getProvider: (name: string) => LLMProvider;
+  /** Resolves the provider for an employee's model; per-owner because API keys are per-CEO. */
+  getProvider: (name: string, ownerId: string) => LLMProvider | Promise<LLMProvider>;
   workerId: string;
   now?: () => Date;
   maxSteps?: number;
@@ -89,7 +90,7 @@ export async function runTask(deps: EngineDeps, task: TaskRecord): Promise<TaskO
     // ---- setup -------------------------------------------------------------------------------
     let provider: LLMProvider;
     try {
-      provider = deps.getProvider(employee.modelProvider);
+      provider = await deps.getProvider(employee.modelProvider, task.ownerId);
     } catch (e) {
       const pe = e instanceof ProviderError ? e : new ProviderError(String(e), "unknown", false);
       return await fail(pe.message, { retryable: pe.retryable });

@@ -211,9 +211,51 @@ select test.as_user('aaaaaaaa-0000-0000-0000-000000000001');
 select test.fails($$update public.approvals set consumed_at = now() where description = 'single-use test'$$, 'A cannot mark an approval consumed (server-only)');
 select test.as_admin();
 
--- ================= cascade =================
+-- ================= user secrets (migration 6) =================
+select test.as_anon();
+select test.fails($$select public.set_my_secret('anthropic_api_key','sk-ant-aaaaaaaaaaaaaaaaaaaaaaaa')$$, 'anon cannot set secrets');
+select test.fails($$select * from public.user_secrets$$, 'anon cannot read user_secrets');
+
+select test.as_user('aaaaaaaa-0000-0000-0000-000000000001');
+select public.set_my_secret('anthropic_api_key', 'sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAWXYZ');
+select test.ok((select count(*) from public.user_secrets) = 1, 'A sees own secret metadata');
+select test.ok((select last4 from public.user_secrets) = 'WXYZ', 'only last4 is exposed');
+select test.fails($$select vault_secret_id from public.user_secrets$$, 'browser cannot read vault_secret_id');
+select test.fails($$select * from vault.decrypted_secrets$$, 'browser cannot read the vault directly');
+select test.fails($$select public.get_secret('aaaaaaaa-0000-0000-0000-000000000001','anthropic_api_key')$$, 'browser cannot call get_secret');
+select test.fails($$insert into public.user_secrets (owner_id,name,vault_secret_id,last4) values ('aaaaaaaa-0000-0000-0000-000000000001','anthropic_api_key',gen_random_uuid(),'1234')$$, 'browser cannot write user_secrets directly');
+select test.fails($$update public.user_secrets set last4 = '0000'$$, 'browser cannot update user_secrets directly');
+select test.fails($$select public.set_my_secret('some_other_name','sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAWXYZ')$$, 'unknown secret names rejected');
+select test.fails($$select public.set_my_secret('anthropic_api_key','short')$$, 'too-short value rejected');
+select test.fails($$select public.set_my_secret('anthropic_api_key','sk-ant has spaces in it 1234567890')$$, 'value with whitespace rejected');
+
+select test.as_user('bbbbbbbb-0000-0000-0000-000000000002');
+select test.ok((select count(*) from public.user_secrets) = 0, 'B cannot see A secret metadata');
+select public.delete_my_secret('anthropic_api_key');
+select test.as_service();
+select test.ok(public.get_secret('aaaaaaaa-0000-0000-0000-000000000001','anthropic_api_key') = 'sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAWXYZ', 'B delete did not touch A key; service role reads the value');
+select test.ok(public.get_secret('bbbbbbbb-0000-0000-0000-000000000002','anthropic_api_key') is null, 'A key is not returned for B');
+
+select test.as_user('aaaaaaaa-0000-0000-0000-000000000001');
+select public.set_my_secret('anthropic_api_key', 'sk-ant-api03-BBBBBBBBBBBBBBBBBBBBBBBBNEW1');
+select test.ok((select last4 from public.user_secrets) = 'NEW1', 'update replaces last4');
+select test.as_service();
+select test.ok(public.get_secret('aaaaaaaa-0000-0000-0000-000000000001','anthropic_api_key') = 'sk-ant-api03-BBBBBBBBBBBBBBBBBBBBBBBBNEW1', 'update replaces the stored value');
 select test.as_admin();
+select test.ok((select count(*) from vault.secrets where name like 'user:aaaaaaaa%') = 1, 'update reuses one vault row');
+select test.as_user('aaaaaaaa-0000-0000-0000-000000000001');
+select public.delete_my_secret('anthropic_api_key');
+select test.ok((select count(*) from public.user_secrets) = 0, 'delete removes metadata');
+select test.as_admin();
+select test.ok((select count(*) from vault.secrets where name like 'user:aaaaaaaa%') = 0, 'delete removes the stored value too');
+
+-- ================= cascade =================
+select test.as_user('bbbbbbbb-0000-0000-0000-000000000002');
+select public.set_my_secret('anthropic_api_key', 'sk-ant-api03-CCCCCCCCCCCCCCCCCCCCCCCCZZZ9');
+select test.as_admin();
+select test.ok((select count(*) from vault.secrets where name like 'user:bbbbbbbb%') = 1, 'B key stored before deletion');
 delete from auth.users where id = 'bbbbbbbb-0000-0000-0000-000000000002';
+select test.ok((select count(*) from vault.secrets where name like 'user:bbbbbbbb%') = 0, 'deleting a user removes their stored secrets');
 select test.ok((select count(*) from public.employees where owner_id = 'bbbbbbbb-0000-0000-0000-000000000002') = 0
            and (select count(*) from public.departments where owner_id = 'bbbbbbbb-0000-0000-0000-000000000002') = 0
            and (select count(*) from public.profiles where id = 'bbbbbbbb-0000-0000-0000-000000000002') = 0, 'deleting a user cascades all their data');

@@ -2,6 +2,8 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createEngineDeps, createServiceClient, readEngineConfig, type EngineConfig } from "@/lib/engine/factory";
+import { resolveAnthropicKey } from "@/lib/engine/keys";
+import { SupabaseStore } from "@/lib/engine/supabaseStore";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 /** The signed-in CEO for this request (verified with Supabase Auth), plus a client bound to their session (RLS applies). */
@@ -14,10 +16,10 @@ export async function requireUser() {
 }
 
 /** Engine config, or a 503 response naming the missing variables (names only, never values). */
-export function engineConfigOrResponse(opts: { needAnthropic: boolean }): { config: EngineConfig } | { response: NextResponse } {
+export function engineConfigOrResponse(opts: { needAnthropic?: boolean } = {}): { config: EngineConfig } | { response: NextResponse } {
   const r = readEngineConfig();
   const missing = r.ok ? [] : r.missing;
-  if (r.ok && opts.needAnthropic && !r.config.anthropicApiKey) missing.push("ANTHROPIC_API_KEY");
+  if (r.ok && opts.needAnthropic && !r.config.anthropicApiKey) missing.push("ANTHROPIC_API_KEY");  // legacy: keys now live in Settings
   if (!r.ok || missing.length) {
     return {
       response: NextResponse.json(
@@ -30,6 +32,16 @@ export function engineConfigOrResponse(opts: { needAnthropic: boolean }): { conf
 }
 
 export { createEngineDeps, createServiceClient };
+
+/** 503 telling the CEO to add a key in Settings, or null when the owner (or the server env) has one. */
+export async function missingKeyResponse(config: EngineConfig, ownerId: string): Promise<NextResponse | null> {
+  const key = await resolveAnthropicKey(new SupabaseStore(createServiceClient(config)), ownerId, config.anthropicApiKey);
+  if (key) return null;
+  return NextResponse.json(
+    { error: "No Anthropic API key is configured. Add one in Settings → API keys.", code: "api_key_missing" },
+    { status: 503 },
+  );
+}
 
 export function secretMatches(provided: string | null, expected: string | undefined) {
   if (!provided || !expected) return false;

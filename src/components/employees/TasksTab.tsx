@@ -127,7 +127,7 @@ export function TasksTab({ employee }: { employee: Employee }) {
       await triggerWorker();
       setInfo("The AI engine has started. Progress appears here and on the employee's avatar as it happens.");
     } catch (e) {
-      setInfo(e instanceof ApiError && e.status === 503 ? `Saved and queued, but ${e.message} It will wait until the server is configured.` : `Saved and queued, but the engine could not be started: ${e instanceof Error ? e.message : String(e)}`);
+      setInfo(e instanceof ApiError && e.status === 503 ? `Saved and queued, but ${e.message.charAt(0).toLowerCase()}${e.message.slice(1)} It will wait until that is fixed.` : `Saved and queued, but the engine could not be started: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 

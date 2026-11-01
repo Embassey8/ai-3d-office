@@ -182,6 +182,11 @@ export class SupabaseStore implements Store {
     return typeof n === "number" ? n : 0;
   }
 
+  async getSecret(ownerId: string, name: "anthropic_api_key") {
+    const v = must(await this.sb.rpc("get_secret", { p_owner: ownerId, p_name: name }), "get_secret") as string | null;
+    return v && v.length > 0 ? v : null;
+  }
+
   async getConversationHistory(conversationId: string, limit: number): Promise<ChatMessageRecord[]> {
     const rows = must(
       await this.sb.from("messages").select("role, content").eq("conversation_id", conversationId).order("created_at", { ascending: false }).limit(limit),

@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: Milestone 4 (in progress)._
+_Last updated: Milestone 4 (in progress) + Settings → API keys._
 
 ## Milestone 1 — Foundation: complete
 
@@ -97,10 +97,15 @@ permission gateway, single-use approvals, memory, retries/backoff, timeout, canc
 activity logging), queue processor, chat reply, `/api/chat`, `/api/worker/tick`,
 `/api/employees/[id]/control`, standalone `npm run worker`, UI wiring (chat, tasks, controls, approve/reject).
 
-**Not done / not verified:** migration `20261101000005_engine_support.sql` is written and passes 79 local SQL
-assertions but has NOT been applied to the Supabase project (the connector's confirmation prompt went
-unanswered). No real Claude API call and no live Supabase call from the app has ever been made (no
-`ANTHROPIC_API_KEY` / `SUPABASE_SERVICE_ROLE_KEY` in this environment; network blocked). Integrations other than
+**Migrations 5 and 6 are now APPLIED to the Supabase project** (5 verified by inspecting the schema; 6 applied
+successfully). Settings → API keys (Vault) is built: `/settings`, `PUT/DELETE /api/settings/api-key`,
+`GET /api/settings/status`; the engine resolves each CEO's key from Vault, falling back to an optional
+`ANTHROPIC_API_KEY` env var. **Still pending:** the rolled-back security test for migration 6 against the real
+project (the connector's confirmation prompt for that script went unanswered); it passes on local Postgres
+(101 SQL assertions, with a stand-in Vault) and 76 unit tests pass.
+
+**Not done / not verified:** No real Claude API call and no live Supabase call from the app has ever been made (no
+Anthropic key / `SUPABASE_SERVICE_ROLE_KEY` in this environment; network blocked). Integrations other than
 web search, delegation and memory are not connected; sensitive tools pause for approval and then report that no
 integration is connected. Docs for the engine are still to be written.
 

@@ -50,4 +50,11 @@ accounts, tasks, chat history and Realtime:
 2. `cp .env.example .env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 3. `npm run dev`, create an account on `/login`. Your company is seeded on first sign-up.
 
+### API keys
+
+Add your Anthropic key in the app under **Settings → API keys** (`/settings`). It is verified with
+Anthropic, stored encrypted in Supabase Vault and used only by the server. The one secret that must be set
+in your hosting environment is `SUPABASE_SERVICE_ROLE_KEY` (it cannot live in the database it unlocks).
+`ANTHROPIC_API_KEY` in the environment is only an optional server-wide fallback.
+
 Never put the service-role key in a `NEXT_PUBLIC_*` variable.

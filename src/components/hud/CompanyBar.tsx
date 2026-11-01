@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, LogOut, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { Bell, LogOut, Settings, ShieldAlert } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { useEmployeeStore } from "@/store/employees";
 
@@ -57,6 +58,7 @@ export function CompanyBar() {
       </div>
       <div className="flex items-center gap-1 px-3 text-xs" title="Pending approvals"><ShieldAlert className="h-4 w-4 text-amber-400" aria-hidden />{approvals}</div>
       <div className="flex items-center gap-1 px-3 text-xs" title="Unread notifications"><Bell className="h-4 w-4 text-amber-400" aria-hidden />{unread}</div>
+      <Link href="/settings" className="flex items-center gap-1 px-3 text-xs text-slate-300 hover:text-white" title="API keys and settings"><Settings className="h-4 w-4" aria-hidden /> Settings</Link>
       <form action={signOut} className="px-3">
         <button className="flex items-center gap-1 text-xs text-slate-300 hover:text-white" title={email ?? "Sign out"}>
           <LogOut className="h-4 w-4" aria-hidden /> Sign out
