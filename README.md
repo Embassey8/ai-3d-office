@@ -1,30 +1,43 @@
-# AI 3D Office
+# Embassey AI Headquarters
 
-A 3D virtual office powered by AI.
+A 3D virtual company headquarters where a human CEO walks around an office, meets AI employees,
+assigns them tasks and monitors their work.
 
-## Overview
+> **Status:** Milestone 1 (foundation) is complete. AI employees, backend and automation are
+> not built yet — see [PROJECT_STATUS.md](./PROJECT_STATUS.md).
 
-AI 3D Office is a project for building an interactive three-dimensional office space where AI agents and people can work together.
+## Quick start
 
-## Features (planned)
-
-- Navigable 3D office environment
-- AI agents that act as virtual coworkers
-- Shared rooms, desks, and meeting spaces
-
-## Getting Started
+Requires Node.js 22+.
 
 ```bash
-git clone https://github.com/<your-username>/ai-3d-office.git
-cd ai-3d-office
+npm install
+npm run dev
 ```
 
-Setup and run instructions will be added as the project develops.
+Open http://localhost:3000.
 
-## Contributing
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build / serve |
+| `npm run lint` | ESLint |
+| `npx vitest run` | Unit tests |
 
-Issues and pull requests are welcome.
+## Controls
 
-## License
+| Input | Action |
+|---|---|
+| `W A S D` / arrows | Move (relative to the camera) |
+| `Shift` | Run |
+| Mouse drag | Rotate camera (third-person) |
+| Scroll | Zoom |
+| `C` | Switch third-person / isometric camera |
+| On-screen pad | Movement on touch devices |
 
-To be decided.
+## Documentation
+
+* [Architecture](./docs/ARCHITECTURE.md) — design, folder structure, services, env vars
+* [PROJECT_STATUS.md](./PROJECT_STATUS.md) — completed and pending work
+
+Copy `.env.example` to `.env.local` once backend milestones begin.
