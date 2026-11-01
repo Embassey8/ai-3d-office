@@ -7,11 +7,12 @@ Migrations in `migrations/` are the single source of truth for the database.
 | `20261101000001_core_schema.sql` | 13 tables, composite ownership FKs, checks, indexes, triggers |
 | `20261101000002_rls_and_queue.sql` | RLS, column-level grants, task/approval guards, `claim_next_task`, `requeue_stale_tasks` |
 | `20261101000003_seed_and_realtime.sql` | Tool catalogue, per-user company seeding on signup, Realtime publication |
+| `20261101000004_pin_function_search_path.sql` | Pins `search_path` on trigger helpers (security advisor) |
 
 ## Apply to a Supabase project
 
 Either use the Supabase CLI (`supabase link --project-ref <ref>` then `supabase db push`) or paste
-the three files, in order, into the SQL editor. Then in the dashboard:
+the four files, in order, into the SQL editor. Then in the dashboard:
 
 1. **Authentication → Providers → Email** — enabled. For quick local testing you may turn off
    "Confirm email"; leave it on for production.

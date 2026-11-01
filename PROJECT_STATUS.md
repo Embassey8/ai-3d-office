@@ -52,31 +52,34 @@ Implemented and verified:
 - shadcn/ui is still blocked by the network. `Button`, `Badge` and `TabList` are hand-written in
   shadcn style under `src/components/ui/`.
 
-## Milestone 3 — Backend: code complete; NOT yet verified against a live Supabase project
+## Milestone 3 — Backend: database verified on real Supabase; app-level live flow NOT yet verified
+
+Supabase project **`embassey-ai-hq`** (ref `pimsupckcbezbmjwmdgj`, eu-west-1, free plan) was created and
+migrations `20261101000001`–`…04` are applied to it. Security advisor: no findings. Performance advisor:
+INFO only (composite FKs lack covering indexes; indexes unused on an empty DB) — deferred until there is data.
 
 Built and **verified**:
 
-- 3 SQL migrations: all 13 required tables with composite ownership FKs, check constraints, indexes,
-  `updated_at` triggers, RLS on every table, column-level grants, task/approval guards, a
-  `SKIP LOCKED` task queue (`claim_next_task`, `requeue_stale_tasks`), a tool catalogue, per-user
-  company seeding on sign-up, and the Realtime publication.
-- **71 SQL assertions pass on a real PostgreSQL 16** (`supabase/tests/run.sh`): two-tenant isolation,
-  forged/cross-tenant writes rejected, server-owned columns protected, task transitions, queue
-  ordering/locking/stale recovery, approval stamping, cascade deletes. A tunnelling-style test bug
-  and a same-transaction timestamp quirk were found and fixed while writing them.
-- 22 unit tests (mappers, validation, SQL-seed ↔ app-seed consistency); typecheck, lint and
-  production build pass; demo mode re-checked in a browser.
+- 4 SQL migrations: the 13 required tables with composite ownership FKs, check constraints, indexes,
+  `updated_at` triggers, RLS on every table, column-level grants, task/approval guards, a `SKIP LOCKED` task
+  queue (`claim_next_task`, `requeue_stale_tasks`), tool catalogue, per-user company seeding on sign-up
+  (trigger on `auth.users`), Realtime publication (7 tables), pinned function `search_path`.
+- **The full security test suite passes twice**: 71 assertions on a local PostgreSQL 16
+  (`supabase/tests/run.sh`) and again on the **real Supabase project** (real roles, `auth.uid()` and default
+  grants; run in a transaction that rolled itself back — the project has 0 users/rows afterwards). Covers
+  two-tenant isolation, forged/cross-tenant writes, server-owned columns, task transitions, queue ordering /
+  locking / stale recovery, approval stamping, cascade deletes.
+- 22 unit tests (mappers, validation, SQL-seed ↔ app-seed consistency); typecheck, lint, production build;
+  with Supabase configured, signed-out visitors are redirected to `/login` by `proxy.ts`; demo mode re-checked.
 
-Built but **not verified end-to-end** (needs a Supabase project with the migrations applied):
-
-- Auth (email/password sign-in/up, `proxy.ts` session refresh, sign-out), loading real employees /
-  tasks / activity / conversations, Realtime subscriptions that update avatars and counts, assigning/
-  editing/pausing/resuming/cancelling tasks, saving chat messages, configuring employees, the live
-  company-stats bar. The code compiles and follows the tested DB contract, but I have **not** seen it
-  work against real Supabase Auth/PostgREST/Realtime, so the acceptance criterion "data persists after
-  refresh" is **unconfirmed**.
-- The local Postgres used for the SQL tests stubs Supabase's `auth` schema and roles; behaviours such as
-  Realtime delivery and JWT handling were not exercised.
+**Not verified end-to-end — blocked by this build sandbox's network policy**, which denies
+`pimsupckcbezbmjwmdgj.supabase.co` for the app server and `curl` (the Supabase connector used for the
+migrations works over a separate channel). So I have **not** seen these work in a browser against the live
+project: sign-up/sign-in/sign-out, loading real data into the office, Realtime updates to avatars, assigning /
+editing / pausing / cancelling tasks, saving chat messages, configuring employees, the live stats bar. The
+acceptance criterion "data persists after refresh" is therefore **unconfirmed** at the app level, even though
+the database contract it relies on is verified. To close this: allow that host in the environment's network
+settings and re-run the sign-up → assign task → refresh flow (or run the app locally with `.env.local` set).
 
 Honest limitations:
 
@@ -84,7 +87,7 @@ Honest limitations:
   **no employee answers** (Milestone 4). Employees stay `idle` until a worker updates them.
 - No approvals/notifications UI yet — only live counts in the bar (decision UI is Milestone 5).
 - The "Demo preview" status selector still exists (local, never saved, clearly labelled).
-- Moved to `src/proxy.ts` (Next 16 renamed middleware to proxy).
+- Email confirmation on the new project is at Supabase's default; sign-up shows "check your email".
 
 ## Known gaps / honest notes
 
@@ -101,7 +104,7 @@ Honest limitations:
 | Milestone | Status |
 |---|---|
 | 2 — Office environment | complete (see above) |
-| 3 — Backend (Supabase schema, auth, realtime) | code complete; DB tested locally; live Supabase verification pending (see above) |
+| 3 — Backend (Supabase schema, auth, realtime) | DB verified on real project; app-level live flow unverified (network-blocked, see above) |
 | 4 — AI employees (Claude, chat, tasks, tools, memory) | not started |
 | 5 — Business automation (n8n, approvals, schedules) | not started |
 | 6 — Production readiness | not started |

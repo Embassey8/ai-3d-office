@@ -3,7 +3,7 @@
 A 3D virtual company headquarters where a human CEO walks around an office, meets AI employees,
 assigns them tasks and monitors their work.
 
-> **Status:** Milestones 1–2 are complete; Milestone 3 (Supabase backend) is code-complete but not yet verified against a live Supabase project. AI employees and automation are
+> **Status:** Milestones 1–2 are complete; Milestone 3 (Supabase backend): database verified on a real project, app-level live flow not yet verified. AI employees and automation are
 > not built yet — see [PROJECT_STATUS.md](./PROJECT_STATUS.md).
 
 ## Quick start
