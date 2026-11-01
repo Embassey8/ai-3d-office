@@ -73,7 +73,7 @@ not adopted because ecosystem support is unverified.
 | Variable | Scope | Milestone |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | browser | 3 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser | 3 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`) | browser | 3 |
 | `SUPABASE_SERVICE_ROLE_KEY` | server/worker only | 3 |
 | `ANTHROPIC_API_KEY` | server/worker only | 4 |
 | `N8N_BASE_URL`, `N8N_API_KEY`, `N8N_WEBHOOK_SECRET` | server/worker only | 5 |

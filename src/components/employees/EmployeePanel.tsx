@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, Info, Pause, Play, Settings, Send, X } from "lucide-react";
-import { SEED_EMPLOYEES } from "@/lib/employees/seed";
-import { ALL_STATUSES, STATUS_META } from "@/lib/employees/status";
-import type { EmployeeStatus } from "@/lib/employees/types";
-import { useEmployeeStore } from "@/store/employees";
+import { X } from "lucide-react";
+import { STATUS_META } from "@/lib/employees/status";
+import { effectiveStatus, useEmployeeStore } from "@/store/employees";
+import { ActivityTab } from "./ActivityTab";
+import { ChatTab } from "./ChatTab";
+import { ControlsTab } from "./ControlsTab";
+import { TasksTab } from "./TasksTab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TabList } from "@/components/ui/tabs";
@@ -18,27 +20,13 @@ const TABS = [
   { id: "controls", label: "Controls" },
 ];
 
-function Notice({ milestone, children }: { milestone: string; children: React.ReactNode }) {
-  return (
-    <div className="flex gap-2 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100/90">
-      <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />
-      <p>
-        {children} <span className="text-amber-300">Planned for {milestone}.</span> Nothing here is simulated.
-      </p>
-    </div>
-  );
-}
-
-function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="py-6 text-center text-sm text-slate-400">{children}</p>;
-}
-
 export function EmployeePanel() {
   const selectedId = useEmployeeStore((s) => s.selectedId);
-  const status = useEmployeeStore((s) => (s.selectedId ? s.statuses[s.selectedId] : "idle"));
-  const previewing = useEmployeeStore((s) => (s.selectedId ? !!s.previewing[s.selectedId] : false));
+  const status = useEmployeeStore((s) => (s.selectedId ? effectiveStatus(s, s.selectedId) : "idle"));
+  const previewing = useEmployeeStore((s) => (s.selectedId ? s.previews[s.selectedId] !== undefined : false));
+  const employees = useEmployeeStore((s) => s.employees);
+  const tasks = useEmployeeStore((s) => s.tasks);
   const select = useEmployeeStore((s) => s.select);
-  const setPreviewStatus = useEmployeeStore((s) => s.setPreviewStatus);
   const [tab, setTab] = useState("overview");
 
   useEffect(() => {
@@ -48,7 +36,7 @@ export function EmployeePanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedId, select]);
 
-  const employee = SEED_EMPLOYEES.find((e) => e.id === selectedId);
+  const employee = employees.find((e) => e.id === selectedId);
   if (!employee) return null;
   const meta = STATUS_META[status];
 
@@ -107,7 +95,7 @@ export function EmployeePanel() {
               </div>
               <div className="col-span-2">
                 <dt className="text-xs uppercase tracking-wide text-slate-400">Current assignment</dt>
-                <dd className="text-slate-300">None — no task has been assigned.</dd>
+                <dd className="text-slate-300">{tasks.find((t) => t.id === employee.currentTaskId)?.title ?? "None — no task is running."}</dd>
               </div>
             </dl>
             <div>
@@ -131,84 +119,10 @@ export function EmployeePanel() {
           </>
         )}
 
-        {tab === "chat" && (
-          <>
-            <Notice milestone="Milestone 4">
-              Chat will send your messages to {employee.name}&rsquo;s real AI model.
-            </Notice>
-            <Empty>No messages yet.</Empty>
-            <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-              <input
-                disabled
-                aria-label="Message"
-                placeholder={`Message ${employee.name.split(" ")[0]}…`}
-                className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm disabled:opacity-40"
-              />
-              <Button type="submit" variant="primary" disabled aria-label="Send">
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </>
-        )}
-
-        {tab === "tasks" && (
-          <>
-            <Notice milestone="Milestones 3–4">
-              Assigning, prioritising, pausing and reviewing tasks needs the database and execution engine.
-            </Notice>
-            <Empty>No tasks in the queue.</Empty>
-            <Button variant="primary" disabled className="w-full">
-              Assign new task
-            </Button>
-          </>
-        )}
-
-        {tab === "activity" && (
-          <>
-            <Notice milestone="Milestone 3">
-              Actions, tool usage, errors and completed work will be listed from the activity log.
-            </Notice>
-            <Empty>No activity recorded.</Empty>
-          </>
-        )}
-
-        {tab === "controls" && (
-          <>
-            <Notice milestone="Milestone 4">
-              Start, pause, resume and configure act on a real execution queue.
-            </Notice>
-            <div className="grid grid-cols-2 gap-2">
-              <Button disabled><Play className="h-4 w-4" /> Start</Button>
-              <Button disabled><Pause className="h-4 w-4" /> Pause</Button>
-              <Button disabled><Play className="h-4 w-4" /> Resume</Button>
-              <Button disabled><Settings className="h-4 w-4" /> Configure</Button>
-            </div>
-
-            <div className="rounded-lg border border-dashed border-white/15 p-3">
-              <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-300">
-                <Bot className="h-4 w-4" aria-hidden /> Demo preview
-              </div>
-              <p className="mb-2 text-xs text-slate-400">
-                Visual test of avatar poses and status labels only. It does <strong>not</strong> run any
-                task. Cleared on reload.
-              </p>
-              <label className="sr-only" htmlFor="preview-status">Preview status</label>
-              <select
-                id="preview-status"
-                value={previewing ? status : ""}
-                onChange={(e) =>
-                  setPreviewStatus(employee.id, e.target.value ? (e.target.value as EmployeeStatus) : null)
-                }
-                className="w-full rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 text-sm"
-              >
-                <option value="">Real status (idle)</option>
-                {ALL_STATUSES.filter((s) => s !== "idle").map((s) => (
-                  <option key={s} value={s}>{STATUS_META[s].label}</option>
-                ))}
-              </select>
-            </div>
-          </>
-        )}
+        {tab === "chat" && <ChatTab employee={employee} />}
+        {tab === "tasks" && <TasksTab employee={employee} />}
+        {tab === "activity" && <ActivityTab employee={employee} />}
+        {tab === "controls" && <ControlsTab employee={employee} />}
       </div>
     </aside>
   );

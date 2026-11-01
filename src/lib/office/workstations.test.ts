@@ -9,7 +9,7 @@ describe("employee workstations", () => {
   it("gives every seed employee a distinct, existing workstation", () => {
     const ids = SEED_EMPLOYEES.map((e) => e.workstationId);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const id of ids) expect(findWorkstation(id), id).toBeDefined();
+    for (const id of ids) expect(findWorkstation(id as string), String(id)).toBeDefined();
   });
 
   it("has unique employee ids and the 7 required roles", () => {
@@ -29,7 +29,7 @@ describe("employee workstations", () => {
 
   it("keeps seat and standing positions inside the building and clear of walls and furniture", () => {
     for (const e of SEED_EMPLOYEES) {
-      const f = findWorkstation(e.workstationId)!;
+      const f = findWorkstation(e.workstationId as string)!;
       const { seat, stand } = workstationPoses(f, e.standSide);
       // Standing spot must be walkable and in the same room as the desk.
       expect(collides(stand.x, stand.z, 0.25, COLLIDERS), `${e.id} stand blocked`).toBe(false);

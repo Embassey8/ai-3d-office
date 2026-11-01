@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { Component, type ReactNode } from "react";
 import { Hud } from "@/components/hud/Hud";
 import { EmployeePanel } from "@/components/employees/EmployeePanel";
+import { CompanyProvider } from "@/components/CompanyProvider";
+import { CompanyBar } from "@/components/hud/CompanyBar";
 import { useUiStore } from "@/store/ui";
 
 // three.js needs the browser; keep it out of the server render entirely.
@@ -58,13 +60,16 @@ function LoadingOverlay() {
 
 export function OfficeClient() {
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-slate-950 text-slate-100">
-      <SceneBoundary>
-        <OfficeScene />
-      </SceneBoundary>
-      <Hud />
-      <EmployeePanel />
-      <LoadingOverlay />
-    </div>
+    <CompanyProvider>
+      <div className="relative h-dvh w-full overflow-hidden bg-slate-950 text-slate-100">
+        <SceneBoundary>
+          <OfficeScene />
+        </SceneBoundary>
+        <Hud />
+        <CompanyBar />
+        <EmployeePanel />
+        <LoadingOverlay />
+      </div>
+    </CompanyProvider>
   );
 }

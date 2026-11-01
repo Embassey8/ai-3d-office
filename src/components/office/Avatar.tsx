@@ -8,7 +8,7 @@ import type { Employee } from "@/lib/employees/types";
 import { STATUS_META, isAtDesk, isTyping } from "@/lib/employees/status";
 import { findWorkstation, workstationPoses } from "@/lib/office/workstations";
 import { roomAt } from "@/lib/office/layout";
-import { useEmployeeStore } from "@/store/employees";
+import { effectiveStatus, useEmployeeStore } from "@/store/employees";
 import { useUiStore } from "@/store/ui";
 
 const WALK_SPEED = 1.1;
@@ -25,14 +25,14 @@ const angleDamp = (cur: number, target: number, dt: number, rate = 10) => {
  * desk for statuses where the employee is at their workstation.
  */
 export function Avatar({ employee }: { employee: Employee }) {
-  const desk = findWorkstation(employee.workstationId);
+  const desk = employee.workstationId ? findWorkstation(employee.workstationId) : undefined;
   const poses = useMemo(
     () => (desk ? workstationPoses(desk, employee.standSide) : null),
     [desk, employee.standSide],
   );
 
-  const status = useEmployeeStore((s) => s.statuses[employee.id]);
-  const previewing = useEmployeeStore((s) => !!s.previewing[employee.id]);
+  const status = useEmployeeStore((s) => effectiveStatus(s, employee.id));
+  const previewing = useEmployeeStore((s) => s.previews[employee.id] !== undefined);
   const selected = useEmployeeStore((s) => s.selectedId === employee.id);
   const select = useEmployeeStore((s) => s.select);
 
@@ -66,7 +66,7 @@ export function Avatar({ employee }: { employee: Employee }) {
     if (!poses || !root.current) return;
     const dt = Math.min(delta, 0.05);
     const t = clock.elapsedTime;
-    const s = useEmployeeStore.getState().statuses[employee.id];
+    const s = effectiveStatus(useEmployeeStore.getState(), employee.id);
     const atDesk = isAtDesk(s);
     const target = atDesk ? poses.seat : poses.stand;
 

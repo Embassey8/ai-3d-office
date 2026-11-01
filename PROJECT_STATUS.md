@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: Milestone 2._
+_Last updated: Milestone 3._
 
 ## Milestone 1 — Foundation: complete
 
@@ -52,6 +52,40 @@ Implemented and verified:
 - shadcn/ui is still blocked by the network. `Button`, `Badge` and `TabList` are hand-written in
   shadcn style under `src/components/ui/`.
 
+## Milestone 3 — Backend: code complete; NOT yet verified against a live Supabase project
+
+Built and **verified**:
+
+- 3 SQL migrations: all 13 required tables with composite ownership FKs, check constraints, indexes,
+  `updated_at` triggers, RLS on every table, column-level grants, task/approval guards, a
+  `SKIP LOCKED` task queue (`claim_next_task`, `requeue_stale_tasks`), a tool catalogue, per-user
+  company seeding on sign-up, and the Realtime publication.
+- **71 SQL assertions pass on a real PostgreSQL 16** (`supabase/tests/run.sh`): two-tenant isolation,
+  forged/cross-tenant writes rejected, server-owned columns protected, task transitions, queue
+  ordering/locking/stale recovery, approval stamping, cascade deletes. A tunnelling-style test bug
+  and a same-transaction timestamp quirk were found and fixed while writing them.
+- 22 unit tests (mappers, validation, SQL-seed ↔ app-seed consistency); typecheck, lint and
+  production build pass; demo mode re-checked in a browser.
+
+Built but **not verified end-to-end** (needs a Supabase project with the migrations applied):
+
+- Auth (email/password sign-in/up, `proxy.ts` session refresh, sign-out), loading real employees /
+  tasks / activity / conversations, Realtime subscriptions that update avatars and counts, assigning/
+  editing/pausing/resuming/cancelling tasks, saving chat messages, configuring employees, the live
+  company-stats bar. The code compiles and follows the tested DB contract, but I have **not** seen it
+  work against real Supabase Auth/PostgREST/Realtime, so the acceptance criterion "data persists after
+  refresh" is **unconfirmed**.
+- The local Postgres used for the SQL tests stubs Supabase's `auth` schema and roles; behaviours such as
+  Realtime delivery and JWT handling were not exercised.
+
+Honest limitations:
+
+- Tasks are saved and queue, but **nothing executes them** (Milestone 4). Chat messages are saved but
+  **no employee answers** (Milestone 4). Employees stay `idle` until a worker updates them.
+- No approvals/notifications UI yet — only live counts in the bar (decision UI is Milestone 5).
+- The "Demo preview" status selector still exists (local, never saved, clearly labelled).
+- Moved to `src/proxy.ts` (Next 16 renamed middleware to proxy).
+
 ## Known gaps / honest notes
 
 - **shadcn/ui is not initialised yet.** `npx shadcn init` could not reach `ui.shadcn.com` from the
@@ -67,7 +101,7 @@ Implemented and verified:
 | Milestone | Status |
 |---|---|
 | 2 — Office environment | complete (see above) |
-| 3 — Backend (Supabase schema, auth, realtime) | not started |
+| 3 — Backend (Supabase schema, auth, realtime) | code complete; DB tested locally; live Supabase verification pending (see above) |
 | 4 — AI employees (Claude, chat, tasks, tools, memory) | not started |
 | 5 — Business automation (n8n, approvals, schedules) | not started |
 | 6 — Production readiness | not started |

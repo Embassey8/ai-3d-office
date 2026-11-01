@@ -11,17 +11,20 @@ export type ModelProvider = "anthropic" | "openai" | "google" | "local";
 
 export interface Employee {
   id: string;
+  /** Stable key shared with the database (e.g. "seo"). */
+  slug: string;
   name: string;
   title: string;
   department: string;
   /** Furniture id of the workstation this employee sits at (see layout.ts). */
-  workstationId: string;
+  workstationId: string | null;
   personality: string;
   systemInstructions: string;
   model: { provider: ModelProvider; name: string };
   /** Tool slugs this employee may use. Enforced server-side from Milestone 4. */
   tools: string[];
   appearance: { shirt: string; skin: string; hair: string };
+  currentTaskId?: string | null;
   /** Local x offset of the standing spot relative to the desk (default +1.3). */
   standSide?: 1 | -1;
 }

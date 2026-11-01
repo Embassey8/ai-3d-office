@@ -1,14 +1,14 @@
 import type { Employee } from "./types";
 
 /**
- * Seed roster. Until Milestone 3 (Supabase) this is the source of identity data;
- * afterwards the same objects are inserted into the `employees` table and the
- * app reads them from the database. Runtime state (status, tasks, memory) is
- * deliberately NOT here.
+ * Demo roster, used only when Supabase is not configured. In live mode the same people come
+ * from the `employees` table (seeded per user by supabase/migrations/…_seed_and_realtime.sql;
+ * a unit test keeps the two in sync). Runtime state (status, tasks, memory) is NOT here.
  */
 export const SEED_EMPLOYEES: readonly Employee[] = [
   {
     id: "emp-exec-assistant",
+    slug: "exec-assistant",
     name: "Ava Mercer",
     title: "Executive Assistant",
     department: "Executive",
@@ -23,6 +23,7 @@ export const SEED_EMPLOYEES: readonly Employee[] = [
   },
   {
     id: "emp-seo",
+    slug: "seo",
     name: "Noah Lindgren",
     title: "SEO Specialist",
     department: "Marketing",
@@ -36,6 +37,7 @@ export const SEED_EMPLOYEES: readonly Employee[] = [
   },
   {
     id: "emp-social",
+    slug: "social",
     name: "Maya Okafor",
     title: "Social Media Manager",
     department: "Marketing",
@@ -44,11 +46,12 @@ export const SEED_EMPLOYEES: readonly Employee[] = [
     systemInstructions:
       "You are Maya Okafor, Social Media Manager at Embassey. Draft posts and campaigns in the brand voice. Publishing requires CEO approval.",
     model: { provider: "anthropic", name: "claude-sonnet-5-5" },
-    tools: ["social_draft", "web_search"],
+    tools: ["social_draft", "web_search", "social_publish"],
     appearance: { shirt: "#d9774a", skin: "#8d5a3b", hair: "#1a1210" },
   },
   {
     id: "emp-sdr",
+    slug: "sdr",
     name: "Leo Barros",
     title: "Sales Development Representative",
     department: "Sales",
@@ -57,11 +60,12 @@ export const SEED_EMPLOYEES: readonly Employee[] = [
     systemInstructions:
       "You are Leo Barros, Sales Development Representative at Embassey. Identify and qualify leads and draft outreach. Bulk outreach requires CEO approval.",
     model: { provider: "anthropic", name: "claude-sonnet-5-5" },
-    tools: ["lead_search", "crm", "email_draft"],
+    tools: ["lead_search", "crm", "email_draft", "bulk_email"],
     appearance: { shirt: "#4f6d4a", skin: "#d9a982", hair: "#3a2a20" },
   },
   {
     id: "emp-support",
+    slug: "support",
     name: "Priya Nair",
     title: "Customer Support Specialist",
     department: "Customer Support",
@@ -70,11 +74,12 @@ export const SEED_EMPLOYEES: readonly Employee[] = [
     systemInstructions:
       "You are Priya Nair, Customer Support Specialist at Embassey. Answer customer questions accurately and kindly. Refunds require CEO approval.",
     model: { provider: "anthropic", name: "claude-sonnet-5-5" },
-    tools: ["helpdesk", "knowledge_base"],
+    tools: ["helpdesk", "knowledge_base", "refund"],
     appearance: { shirt: "#b34a5f", skin: "#b9805a", hair: "#1c1411" },
   },
   {
     id: "emp-dev",
+    slug: "dev",
     name: "Kenji Tanaka",
     title: "Software Developer",
     department: "Engineering",
@@ -88,6 +93,7 @@ export const SEED_EMPLOYEES: readonly Employee[] = [
   },
   {
     id: "emp-research",
+    slug: "research",
     name: "Elena Petrova",
     title: "Research Analyst",
     department: "Research",

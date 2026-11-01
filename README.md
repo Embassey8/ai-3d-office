@@ -3,7 +3,7 @@
 A 3D virtual company headquarters where a human CEO walks around an office, meets AI employees,
 assigns them tasks and monitors their work.
 
-> **Status:** Milestones 1–2 (3D office, employees, profile panels) are complete. AI employees, backend and automation are
+> **Status:** Milestones 1–2 are complete; Milestone 3 (Supabase backend) is code-complete but not yet verified against a live Supabase project. AI employees and automation are
 > not built yet — see [PROJECT_STATUS.md](./PROJECT_STATUS.md).
 
 ## Quick start
@@ -41,4 +41,13 @@ Open http://localhost:3000.
 * [Architecture](./docs/ARCHITECTURE.md) — design, folder structure, services, env vars
 * [PROJECT_STATUS.md](./PROJECT_STATUS.md) — completed and pending work
 
-Copy `.env.example` to `.env.local` once backend milestones begin.
+## Connecting Supabase (optional until you want persistence)
+
+Without Supabase the app runs in **demo mode** (seed employees, nothing saved). To enable real
+accounts, tasks, chat history and Realtime:
+
+1. Create a Supabase project and apply `supabase/migrations/*` (see [supabase/README.md](./supabase/README.md)).
+2. `cp .env.example .env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+3. `npm run dev`, create an account on `/login`. Your company is seeded on first sign-up.
+
+Never put the service-role key in a `NEXT_PUBLIC_*` variable.

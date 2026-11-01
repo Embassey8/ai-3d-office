@@ -1,7 +1,6 @@
 import { mat } from "../materials";
-import { SEED_EMPLOYEES } from "@/lib/employees/seed";
 import { screenIsOn } from "@/lib/employees/status";
-import { useEmployeeStore } from "@/store/employees";
+import { effectiveStatus, useEmployeeStore } from "@/store/employees";
 import type { FurnitureDef } from "@/lib/office/layout";
 
 type P = { position?: [number, number, number]; rotation?: [number, number, number] };
@@ -160,8 +159,10 @@ export function ScreenWall({ w }: { w: number; d: number }) {
 export function FurnitureItem({ def }: { def: FurnitureDef }) {
   const { kind, x, z, rotY = 0, w, d } = def;
   // A staffed desk's monitor is lit only while its employee is actually engaged.
-  const owner = SEED_EMPLOYEES.find((e) => e.workstationId === def.id);
-  const screenOn = useEmployeeStore((s) => (owner ? screenIsOn(s.statuses[owner.id]) : false));
+  const screenOn = useEmployeeStore((s) => {
+    const owner = s.employees.find((e) => e.workstationId === def.id);
+    return owner ? screenIsOn(effectiveStatus(s, owner.id)) : false;
+  });
   return (
     <group position={[x, 0, z]} rotation={[0, rotY, 0]} userData={{ furnitureId: def.id }}>
       {kind === "desk" && <Desk w={w} d={d} screenOn={screenOn} />}

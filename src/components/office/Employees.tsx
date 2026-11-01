@@ -1,12 +1,13 @@
 "use client";
 
-import { SEED_EMPLOYEES } from "@/lib/employees/seed";
+import { useEmployeeStore } from "@/store/employees";
 import { Avatar } from "./Avatar";
 
 export function Employees() {
+  const employees = useEmployeeStore((s) => s.employees);
   return (
     <group>
-      {SEED_EMPLOYEES.map((e) => (
+      {employees.map((e) => (
         <Avatar key={e.id} employee={e} />
       ))}
     </group>
