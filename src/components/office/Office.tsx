@@ -1,6 +1,9 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { Group } from "three";
+import { DOORS, doorOpen } from "@/lib/office/doors";
 import {
   CORRIDOR,
   DOOR_WIDTH,
@@ -103,6 +106,46 @@ function DoorHeaders() {
   );
 }
 
+/** Sliding glass doors; open fraction is driven by proximity (see lib/office/doors.ts). */
+function Doors() {
+  const iso = useUiStore((s) => s.cameraMode === "isometric");
+  const refs = useRef<Record<string, { l: Group | null; r: Group | null }>>({});
+  const half = DOOR_WIDTH / 2;
+  useFrame(() => {
+    for (const d of DOORS) {
+      const o = doorOpen[d.roomId];
+      const pair = refs.current[d.roomId];
+      if (!pair) continue;
+      if (pair.l) pair.l.position.x = d.x - half / 2 - o * half;
+      if (pair.r) pair.r.position.x = d.x + half / 2 + o * half;
+    }
+  });
+  return (
+    <group scale={[1, iso ? 1 / 2.4 : 1, 1]}>
+      {DOORS.map((d) => (
+        <group key={d.roomId}>
+          {(["l", "r"] as const).map((side) => (
+            <group
+              key={side}
+              ref={(g) => {
+                (refs.current[d.roomId] ??= { l: null, r: null })[side] = g;
+              }}
+              position={[d.x + (side === "l" ? -half / 2 : half / 2), 1.2, d.z]}
+            >
+              <mesh material={mat.glass}>
+                <boxGeometry args={[half, 2.4, 0.05]} />
+              </mesh>
+              <mesh position={[0, 0, 0]} material={mat.metal}>
+                <boxGeometry args={[half, 0.05, 0.07]} />
+              </mesh>
+            </group>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
 const Furnishings = memo(function Furnishings() {
   return (
     <group>
@@ -119,6 +162,7 @@ export function Office() {
       <Floors />
       <Walls />
       <DoorHeaders />
+      <Doors />
       <Furnishings />
       {/* Ground plane around the building */}
       <mesh position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>

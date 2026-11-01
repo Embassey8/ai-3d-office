@@ -3,7 +3,7 @@
 A 3D virtual company headquarters where a human CEO walks around an office, meets AI employees,
 assigns them tasks and monitors their work.
 
-> **Status:** Milestone 1 (foundation) is complete. AI employees, backend and automation are
+> **Status:** Milestones 1–2 (3D office, employees, profile panels) are complete. AI employees, backend and automation are
 > not built yet — see [PROJECT_STATUS.md](./PROJECT_STATUS.md).
 
 ## Quick start
@@ -33,6 +33,7 @@ Open http://localhost:3000.
 | Mouse drag | Rotate camera (third-person) |
 | Scroll | Zoom |
 | `C` | Switch third-person / isometric camera |
+| Click an employee | Open their profile panel (`Esc` closes) |
 | On-screen pad | Movement on touch devices |
 
 ## Documentation

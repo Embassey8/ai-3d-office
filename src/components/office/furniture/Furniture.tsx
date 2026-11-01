@@ -1,4 +1,7 @@
 import { mat } from "../materials";
+import { SEED_EMPLOYEES } from "@/lib/employees/seed";
+import { screenIsOn } from "@/lib/employees/status";
+import { useEmployeeStore } from "@/store/employees";
 import type { FurnitureDef } from "@/lib/office/layout";
 
 type P = { position?: [number, number, number]; rotation?: [number, number, number] };
@@ -34,11 +37,11 @@ export function Chair({ position = [0, 0, 0], rotation = [0, 0, 0] }: P) {
   );
 }
 
-function Monitor({ position, rotY = 0 }: { position: [number, number, number]; rotY?: number }) {
+function Monitor({ position, rotY = 0, on = true }: { position: [number, number, number]; rotY?: number; on?: boolean }) {
   return (
     <group position={position} rotation={[0, rotY, 0]}>
       <Box size={[0.62, 0.38, 0.03]} position={[0, 0.2, 0]} material={mat.metal} />
-      <mesh position={[0, 0.2, 0.017]} material={mat.screenGlow}>
+      <mesh position={[0, 0.2, 0.017]} material={on ? mat.screenGlow : mat.screenOff}>
         <planeGeometry args={[0.56, 0.32]} />
       </mesh>
       <Box size={[0.06, 0.16, 0.06]} position={[0, 0.02, -0.02]} material={mat.metal} />
@@ -47,15 +50,15 @@ function Monitor({ position, rotY = 0 }: { position: [number, number, number]; r
 }
 
 /** Standard workstation: desk + monitor + keyboard + chair. Desk faces +Z (chair side). */
-export function Desk({ w, d }: { w: number; d: number }) {
+export function Desk({ w, d, screenOn = true }: { w: number; d: number; screenOn?: boolean }) {
   return (
     <group>
       <Box size={[w, 0.06, d]} position={[0, 0.74, 0]} material={mat.wood} />
       <Box size={[0.06, 0.72, d - 0.1]} position={[-w / 2 + 0.05, 0.36, 0]} material={mat.woodDark} />
       <Box size={[0.06, 0.72, d - 0.1]} position={[w / 2 - 0.05, 0.36, 0]} material={mat.woodDark} />
-      <Monitor position={[0, 0.77, -d / 4]} />
+      <Monitor position={[0, 0.77, -d / 4]} on={screenOn} />
       <Box size={[0.42, 0.02, 0.14]} position={[0, 0.78, d / 5]} material={mat.metal} cast={false} />
-      <Chair position={[0, 0, d / 2 + 0.55]} rotation={[0, Math.PI, 0]} />
+      <Chair position={[0, 0, d / 2 + 0.55]} />
     </group>
   );
 }
@@ -68,7 +71,7 @@ export function ExecutiveDesk({ w, d }: { w: number; d: number }) {
       <Monitor position={[-0.55, 0.8, -0.2]} />
       <Monitor position={[0.55, 0.8, -0.2]} />
       <Box size={[0.5, 0.02, 0.16]} position={[0, 0.81, 0.25]} material={mat.metal} cast={false} />
-      <Chair position={[0, 0, d / 2 + 0.7]} rotation={[0, Math.PI, 0]} />
+      <Chair position={[0, 0, d / 2 + 0.7]} />
     </group>
   );
 }
@@ -98,13 +101,13 @@ export function ConferenceTable({ w, d }: { w: number; d: number }) {
         const x = -w / 2 + 0.4 + i * gap;
         return (
           <group key={i}>
-            <Chair position={[x, 0, -d / 2 - 0.45]} />
-            <Chair position={[x, 0, d / 2 + 0.45]} rotation={[0, Math.PI, 0]} />
+            <Chair position={[x, 0, -d / 2 - 0.45]} rotation={[0, Math.PI, 0]} />
+            <Chair position={[x, 0, d / 2 + 0.45]} />
           </group>
         );
       })}
-      <Chair position={[-w / 2 - 0.5, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
-      <Chair position={[w / 2 + 0.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
+      <Chair position={[-w / 2 - 0.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
+      <Chair position={[w / 2 + 0.5, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
     </group>
   );
 }
@@ -156,9 +159,12 @@ export function ScreenWall({ w }: { w: number; d: number }) {
 
 export function FurnitureItem({ def }: { def: FurnitureDef }) {
   const { kind, x, z, rotY = 0, w, d } = def;
+  // A staffed desk's monitor is lit only while its employee is actually engaged.
+  const owner = SEED_EMPLOYEES.find((e) => e.workstationId === def.id);
+  const screenOn = useEmployeeStore((s) => (owner ? screenIsOn(s.statuses[owner.id]) : false));
   return (
     <group position={[x, 0, z]} rotation={[0, rotY, 0]} userData={{ furnitureId: def.id }}>
-      {kind === "desk" && <Desk w={w} d={d} />}
+      {kind === "desk" && <Desk w={w} d={d} screenOn={screenOn} />}
       {kind === "executiveDesk" && <ExecutiveDesk w={w} d={d} />}
       {kind === "receptionDesk" && <ReceptionDesk w={w} d={d} />}
       {kind === "conferenceTable" && <ConferenceTable w={w} d={d} />}

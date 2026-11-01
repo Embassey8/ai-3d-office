@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { Component, type ReactNode } from "react";
 import { Hud } from "@/components/hud/Hud";
+import { EmployeePanel } from "@/components/employees/EmployeePanel";
 import { useUiStore } from "@/store/ui";
 
 // three.js needs the browser; keep it out of the server render entirely.
@@ -62,6 +63,7 @@ export function OfficeClient() {
         <OfficeScene />
       </SceneBoundary>
       <Hud />
+      <EmployeePanel />
       <LoadingOverlay />
     </div>
   );

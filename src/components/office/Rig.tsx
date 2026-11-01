@@ -8,6 +8,8 @@ import { moveWithCollision } from "@/lib/office/collision";
 import { getAxis } from "@/lib/input";
 import { useUiStore } from "@/store/ui";
 import { mat } from "./materials";
+import { closedDoorRects, updateDoors } from "@/lib/office/doors";
+import { useEmployeeStore } from "@/store/employees";
 
 const PLAYER_RADIUS = 0.35;
 const WALK_SPEED = 3;
@@ -143,9 +145,19 @@ export function Rig() {
       const dirX = fx * nz + rx * nx;
       const dirZ = fz * nz + rz * nx;
       const speed = run ? RUN_SPEED : WALK_SPEED;
-      pos.current = moveWithCollision(pos.current, dirX * speed * dt, dirZ * speed * dt, PLAYER_RADIUS, COLLIDERS);
+      pos.current = moveWithCollision(
+        pos.current,
+        dirX * speed * dt,
+        dirZ * speed * dt,
+        PLAYER_RADIUS,
+        [...COLLIDERS, ...closedDoorRects()],
+      );
+      // Moving breaks the camera focus on a selected employee.
+      if (useEmployeeStore.getState().focus) useEmployeeStore.getState().clearFocus();
       heading.current = angleLerp(heading.current, Math.atan2(dirX, dirZ), 1 - Math.exp(-14 * dt));
     }
+
+    updateDoors(pos.current.x, pos.current.z, dt);
 
     const g = avatar.current;
     if (g) {
@@ -164,7 +176,9 @@ export function Rig() {
     const cam = state.camera;
     if (cameraMode === "third-person" && (cam as THREE.PerspectiveCamera).isPerspectiveCamera) {
       const { pitch, dist } = look.current;
-      tmpTarget.current.set(pos.current.x, 1.4, pos.current.z);
+      const focus = useEmployeeStore.getState().focus;
+      if (focus) tmpTarget.current.set(focus.x, 1.2, focus.z);
+      else tmpTarget.current.set(pos.current.x, 1.4, pos.current.z);
       tmpDesired.current.set(
         tmpTarget.current.x + Math.sin(yaw) * Math.cos(pitch) * dist,
         tmpTarget.current.y + Math.sin(pitch) * dist,

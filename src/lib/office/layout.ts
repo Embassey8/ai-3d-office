@@ -91,6 +91,7 @@ const plant = (id: string, x: number, z: number): FurnitureDef => ({
 export const FURNITURE: readonly FurnitureDef[] = [
   // Executive office
   { id: "ceo-desk", kind: "executiveDesk", x: -14.5, z: -9, w: 3, d: 1.4, workstation: true },
+  { ...desk("exec-assistant", -11.5, -6), w: 1.8, d: 0.9 },
   { id: "exec-sofa", kind: "sofa", x: -17.5, z: -4.2, rotY: Math.PI, w: 2.4, d: 0.9 },
   { id: "exec-screen", kind: "screenWall", x: -14.5, z: -13.7, w: 4, d: 0.2 },
   plant("exec-plant-1", -19.2, -13.2),

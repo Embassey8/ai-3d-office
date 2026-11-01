@@ -7,6 +7,7 @@ import { attachKeyboard } from "@/lib/input";
 import { useUiStore } from "@/store/ui";
 import { Office } from "./Office";
 import { Rig } from "./Rig";
+import { Employees } from "./Employees";
 
 function Lighting() {
   return (
@@ -56,6 +57,7 @@ export default function OfficeScene() {
       <Lighting />
       <Suspense fallback={null}>
         <Office />
+        <Employees />
         <Rig />
       </Suspense>
     </Canvas>
