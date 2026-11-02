@@ -5,6 +5,9 @@ import { Component, type ReactNode } from "react";
 import { CompanyProvider } from "@/components/CompanyProvider";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { EmployeePanel } from "@/components/employees/EmployeePanel";
+import { ApprovalsPage } from "@/components/pages/ApprovalsPage";
+import { DashboardPage } from "@/components/pages/DashboardPage";
+import { TasksPage } from "@/components/pages/TasksPage";
 import { SceneOverlays } from "@/components/scene/SceneOverlays";
 import { useEmployeeStore } from "@/store/employees";
 import { useUiStore } from "@/store/ui";
@@ -72,6 +75,7 @@ function ErrorBanner() {
 
 export function AppShell() {
   const hasPanel = useEmployeeStore((s) => s.selectedId !== null);
+  const tab = useUiStore((s) => s.tab);
   return (
     <CompanyProvider>
       <div className="flex h-dvh min-h-[640px] flex-col overflow-hidden bg-bg text-text-1">
@@ -80,9 +84,13 @@ export function AppShell() {
           <div className={`grid min-h-0 flex-1 grid-cols-1 lg:h-full ${hasPanel ? "lg:grid-cols-[minmax(320px,380px)_1fr_minmax(320px,360px)]" : "lg:grid-cols-[minmax(320px,380px)_1fr]"}`}>
             <ChatPanel />
             <main aria-label="3D office" className="relative min-h-[70dvh] min-w-0 overflow-hidden lg:min-h-0" style={{ background: SCENE_BG }}>
-              <SceneBoundary><HqScene /></SceneBoundary>
-              <SceneOverlays />
-              <LoadingOverlay />
+              {tab === "office" ? (
+                <>
+                  <SceneBoundary><HqScene /></SceneBoundary>
+                  <SceneOverlays />
+                  <LoadingOverlay />
+                </>
+              ) : tab === "tasks" ? <TasksPage /> : tab === "approvals" ? <ApprovalsPage /> : <DashboardPage />}
             </main>
             <EmployeePanel />
           </div>

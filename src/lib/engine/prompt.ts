@@ -5,6 +5,8 @@ export function buildSystemPrompt(opts: {
   memories: MemoryRecord[];
   unavailable: ToolGrant[];
   mode: "task" | "chat";
+  /** Colleagues this employee may assign work to (only passed when they have a task-creation tool). */
+  roster?: { slug: string; name: string; title: string }[];
   now?: Date;
 }): string {
   const { employee: e, memories, unavailable, mode } = opts;
@@ -23,6 +25,13 @@ export function buildSystemPrompt(opts: {
   if (memories.length) {
     lines.push("", "Your long-term memory (most important first):");
     for (const m of memories) lines.push(`- [${m.kind}] ${m.content}`);
+  }
+  if (opts.roster?.length) {
+    lines.push(
+      "",
+      "Colleagues you can assign work to with create_task (use the slug). Create a task when the CEO asks for work someone else should do; do not create tasks for simple questions you can answer yourself:",
+    );
+    for (const r of opts.roster) lines.push(`- ${r.slug}: ${r.name}, ${r.title}`);
   }
   if (unavailable.length) {
     lines.push(

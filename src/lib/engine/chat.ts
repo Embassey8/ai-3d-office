@@ -14,7 +14,7 @@ const CHAT_MAX_STEPS = 3;
 export async function replyToChat(
   deps: { store: Store; provider: LLMProvider },
   args: { ownerId: string; employeeId: string; conversationId: string },
-): Promise<{ reply: string; model: string; costUsd: number | null }> {
+): Promise<{ reply: string; model: string; costUsd: number | null; createdTaskIds: string[] }> {
   const { store, provider } = deps;
   const employee = await store.getEmployee(args.employeeId);
   if (!employee || employee.ownerId !== args.ownerId) throw new ProviderError("Employee not found.", "bad_request", false);
@@ -25,7 +25,10 @@ export async function replyToChat(
     store.getConversationHistory(args.conversationId, 30),
   ]);
   const { defs, specs } = resolveTools(grants, { chat: true });
-  const system = buildSystemPrompt({ employee, memories, unavailable: [], mode: "chat" });
+  const roster = defs.has("create_task")
+    ? (await store.listEmployees(args.ownerId)).filter((x) => x.id !== employee.id).map((x) => ({ slug: x.slug, name: x.name, title: x.title }))
+    : undefined;
+  const system = buildSystemPrompt({ employee, memories, unavailable: [], mode: "chat", roster });
 
   const messages: Message[] = history.map((m) => ({ role: m.role, content: [{ type: "text", text: m.content }] as Block[] }));
   if (messages.length === 0 || messages[messages.length - 1].role !== "user") throw new ProviderError("No user message to answer.", "bad_request", false);
@@ -64,9 +67,9 @@ export async function replyToChat(
       if (resp.stopReason === "pause_turn") continue;
       const reply = textOf(resp.content);
       if (!reply) throw new ProviderError("The model returned an empty reply.", "unknown", false);
-      await store.addAssistantMessage({ ownerId: args.ownerId, conversationId: args.conversationId, content: reply, metadata: { model: resp.model, costUsd: cost, costIsEstimate: true } });
+      await store.addAssistantMessage({ ownerId: args.ownerId, conversationId: args.conversationId, content: reply, metadata: { model: resp.model, costUsd: cost, costIsEstimate: true, ...(ctx.counters.createdTaskIds?.length ? { taskIds: ctx.counters.createdTaskIds } : {}) } });
       await store.log({ ownerId: args.ownerId, employeeId: employee.id, eventType: "chat.reply", message: `Replied in chat (${resp.usage.inputTokens} in / ${resp.usage.outputTokens} out tokens).`, metadata: { model: resp.model, costUsd: cost } });
-      return { reply, model: resp.model, costUsd: cost };
+      return { reply, model: resp.model, costUsd: cost, createdTaskIds: ctx.counters.createdTaskIds ?? [] };
     }
     throw new ProviderError("The conversation did not settle within the step limit.", "unknown", false);
   } catch (e) {

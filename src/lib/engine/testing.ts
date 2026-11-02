@@ -29,7 +29,7 @@ export class MemoryStore implements Store {
   currentTask = new Map<string, string | null>();
   statusHistory: { employeeId: string; status: EmployeeStatus }[] = [];
   history = new Map<string, ChatMessageRecord[]>();
-  assistantMessages: { conversationId: string; content: string }[] = [];
+  assistantMessages: { conversationId: string; content: string; metadata?: Record<string, unknown> }[] = [];
   clock = new Date("2026-11-01T10:00:00Z");
   /** Optional hook run at the start of every getTask call (used to simulate a CEO cancelling mid-run). */
   onGetTask?: (id: string) => void;
@@ -86,6 +86,7 @@ export class MemoryStore implements Store {
     const e = [...this.employees.values()].find((x) => x.ownerId === ownerId && x.slug === slug);
     return e ? { ...e } : null;
   }
+  async listEmployees(ownerId: string) { return [...this.employees.values()].filter((e) => e.ownerId === ownerId).map((e) => ({ ...e })); }
   async updateEmployee(id: string, patch: { status?: EmployeeStatus; currentTaskId?: string | null }) {
     const e = this.employees.get(id)!;
     if (patch.status) { e.status = patch.status; this.statusHistory.push({ employeeId: id, status: patch.status }); }
@@ -130,8 +131,8 @@ export class MemoryStore implements Store {
   async getSecret(ownerId: string, name: string) { return this.secrets.get(`${ownerId}:${name}`) ?? null; }
 
   async getConversationHistory(conversationId: string, limit: number) { return (this.history.get(conversationId) ?? []).slice(-limit); }
-  async addAssistantMessage(m: { conversationId: string; content: string }) {
-    this.assistantMessages.push({ conversationId: m.conversationId, content: m.content });
+  async addAssistantMessage(m: { conversationId: string; content: string; metadata?: Record<string, unknown> }) {
+    this.assistantMessages.push({ conversationId: m.conversationId, content: m.content, metadata: m.metadata });
     const h = this.history.get(m.conversationId) ?? [];
     h.push({ role: "assistant", content: m.content });
     this.history.set(m.conversationId, h);

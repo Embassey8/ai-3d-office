@@ -73,6 +73,10 @@ export class SupabaseStore implements Store {
     const r = must(await this.sb.from("employees").select("*").eq("owner_id", ownerId).eq("slug", slug).maybeSingle(), "getEmployeeBySlug") as EmployeeRow | null;
     return r ? mapEmployee(r) : null;
   }
+  async listEmployees(ownerId: string) {
+    const rows = must(await this.sb.from("employees").select("*").eq("owner_id", ownerId).order("created_at"), "listEmployees") as EmployeeRow[] | null;
+    return (rows ?? []).map(mapEmployee);
+  }
   async updateEmployee(id: string, p: { status?: EmployeeStatus; currentTaskId?: string | null }) {
     const patch: Record<string, unknown> = {};
     if (p.status !== undefined) patch.status = p.status;

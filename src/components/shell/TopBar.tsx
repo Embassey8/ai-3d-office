@@ -16,6 +16,7 @@ const TABS: { id: AppTab; label: string }[] = [
 export function TopBar() {
   const tab = useUiStore((s) => s.tab);
   const setPalette = useUiStore((s) => s.setPaletteOpen);
+  const setTab = useUiStore((s) => s.setTab);
   const mode = useEmployeeStore((s) => s.mode);
   const email = useEmployeeStore((s) => s.userEmail);
   const employees = useEmployeeStore((s) => s.employees);
@@ -53,10 +54,10 @@ export function TopBar() {
 
       <nav aria-label="Primary" className="flex gap-0.5 rounded-[10px] border border-white/[0.06] bg-surface-3 p-[3px]">
         {TABS.map((t) => {
-          const built = t.id === "office";
+          const built = t.id !== "brain";
           const active = tab === t.id;
           return (
-            <button key={t.id} disabled={!built} aria-current={active ? "page" : undefined} title={built ? undefined : "Coming soon"}
+            <button key={t.id} disabled={!built} onClick={() => setTab(t.id)} aria-current={active ? "page" : undefined} title={built ? undefined : "Coming soon"}
               className={cn("flex items-center gap-1.5 rounded-[7px] px-3.5 py-[7px] text-[13px]", active ? "bg-bubble-me font-medium text-white" : "text-text-2", !built && "cursor-default opacity-60")}>
               {t.label}
               {t.id === "tasks" && badge(openTasks, "bg-[#2A3044] text-[#C9D0FF]")}

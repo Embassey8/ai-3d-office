@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: Redesign R1+R2 (chat-first shell + new 3D scene) · Milestone 4 in progress · Settings → API keys._
+_Last updated: Redesign R1–R3 (shell, 3D scene, Ada task routing, Tasks/Approvals/Dashboard pages) · Milestone 4 in progress · Settings → API keys._
 
 ## REDESIGN (chat-first, from design/) — R1 shell + R2 scene: built and browser-checked in DEMO mode
 
@@ -21,7 +21,8 @@ The old corridor-style office, HUD and employee overlay were **replaced** follow
   WASD walking and collision.
 - Migration 7 (`20261101000007_design_roster.sql`): the design team (Ada, Femi, Zara, Tobi, Nneka, Kai, Iris) and
   per-employee models for new sign-ups; renames existing seeded employees only if they still have the old default
-  names. **Written and tested locally (102 SQL assertions) but NOT yet applied to the Supabase project.**
+  names. **Applied to the Supabase project** (verified: the seeding function carries the new roster; project now
+  holds 2 users / 14 employees).
 - Verification: typecheck, lint, 75 unit tests, production build; headless-Chromium run of demo mode (no console
   errors): scene renders, room fly-to, ⌘K → employee DM + docked panel, status preview changes the 3D pose/label,
   third-person walking.
@@ -31,6 +32,23 @@ Dashboard / Brain pages, the department close-up scene (Office.dc.html: 3× room
 placeholder), voice chat (Chat.dc.html), slash commands, file attachments, hiring, workspace switcher, notification
 list and toasts, @mentions, department group channels, the Ada "create task" chat tool. The live (signed-in) path of
 the new UI has not been seen against a real Supabase project (sandbox network block). Characters are primitives.
+
+### R3 (this step)
+
+- **Ada routes work**: employees with the `task_router` grant get a `create_task` tool in CHAT (low-risk, reversible:
+  creates a *queued* task visible to the CEO). The system prompt lists the colleagues (slug, name, role); the tool is
+  scoped to the same company, refuses self-assignment, is limited to 3 tasks per message, and the reply message
+  records `metadata.taskIds` so the chat shows task cards under it. Tasks created this way start running in the
+  background right away (`after()` + queue). High-risk tools (publish, bulk email, refunds, web) are still NOT offered
+  in chat. 79 unit tests cover this with a scripted fake model; it has not been run against the real Claude API.
+- **Tasks, Approvals and Dashboard pages** (real data only; demo mode shows "—" and a notice): task list with
+  filters and pause/resume/cancel; approvals with Approve/Reject + optional note; dashboard with employees,
+  in-progress/queued/completed/failed, pending approvals, estimated AI cost, department performance and recent
+  activity. The Brain tab stays disabled.
+- Browser-checked in demo mode: tab navigation, empty states, returning to the 3D office. Not seen live.
+
+Still to build: department close-up scene, voice chat, slash commands, attachments, hiring, notifications list,
+the Brain page (shared memory), department channels/@mentions.
 
 ## Milestone 1 — Foundation: complete (superseded by the redesign above)
 

@@ -46,6 +46,7 @@ export interface MessageRow {
   conversation_id: string;
   role: ChatMessage["role"];
   content: string;
+  metadata?: { taskIds?: unknown } | null;
   created_at: string;
 }
 
@@ -99,6 +100,7 @@ export const mapMessage = (r: MessageRow): ChatMessage => ({
   conversationId: r.conversation_id,
   role: r.role,
   content: r.content,
+  taskIds: Array.isArray(r.metadata?.taskIds) ? (r.metadata!.taskIds as unknown[]).filter((x): x is string => typeof x === "string") : undefined,
   createdAt: r.created_at,
 });
 

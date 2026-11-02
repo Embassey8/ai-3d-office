@@ -98,6 +98,7 @@ export interface Store {
 
   getEmployee(id: string): Promise<EmployeeRecord | null>;
   getEmployeeBySlug(ownerId: string, slug: string): Promise<EmployeeRecord | null>;
+  listEmployees(ownerId: string): Promise<EmployeeRecord[]>;
   updateEmployee(id: string, patch: { status?: EmployeeStatus; currentTaskId?: string | null }): Promise<void>;
   listGrantedTools(employeeId: string): Promise<ToolGrant[]>;
 

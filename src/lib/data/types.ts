@@ -40,6 +40,8 @@ export interface ChatMessage {
   conversationId: string;
   role: "user" | "assistant" | "system" | "tool";
   content: string;
+  /** Assistant messages that created tasks carry their ids so the chat can show task cards. */
+  taskIds?: string[];
   createdAt: string;
 }
 

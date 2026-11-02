@@ -71,14 +71,22 @@ function TaskCard({ t, employee }: { t: Task; employee: Employee }) {
 
 function Bubbles({ employee, items }: { employee: Employee; items: Item[] }) {
   const empById = useEmployeeStore((s) => s.employees);
+  const allTasks = useEmployeeStore((s) => s.tasks);
   return (
     <>
       {items.map((it) => {
         if (it.kind === "message") {
           const m = it.m;
           if (m.role === "user") return <div key={m.id} className="max-w-[82%] self-end rounded-[14px_14px_4px_14px] bg-bubble-me px-[13px] py-2.5 leading-[1.45] whitespace-pre-wrap">{m.content}</div>;
+          const made = (m.taskIds ?? []).flatMap((id) => allTasks.filter((t) => t.id === id));
           return (
-            <div key={m.id} className="flex gap-2.5"><Avatar e={employee} /><div className="min-w-0 whitespace-pre-wrap leading-[1.5] text-[#DDE1E8]">{m.content}</div></div>
+            <div key={m.id} className="flex gap-2.5">
+              <Avatar e={employee} />
+              <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+                <div className="whitespace-pre-wrap leading-[1.5] text-[#DDE1E8]">{m.content}</div>
+                {made.map((t) => <TaskCard key={t.id} t={t} employee={empById.find((e) => e.id === t.employeeId) ?? employee} />)}
+              </div>
+            </div>
           );
         }
         if (it.kind === "task") {
@@ -125,7 +133,8 @@ export function ChatPanel() {
     if (!active || !live) return [];
     const out: Item[] = [];
     for (const m of messages ?? []) out.push({ kind: "message", at: m.createdAt, m });
-    for (const t of tasks) if (t.employeeId === active.id) out.push({ kind: "task", at: t.createdAt, t });
+    const shown = new Set((messages ?? []).flatMap((m) => m.taskIds ?? []));
+    for (const t of tasks) if (t.employeeId === active.id && !shown.has(t.id)) out.push({ kind: "task", at: t.createdAt, t });
     for (const a of approvals) if (a.employeeId === active.id) out.push({ kind: "approval", at: a.createdAt, a });
     return out.sort((x, y) => x.at.localeCompare(y.at));
   }, [active, live, messages, tasks, approvals]);

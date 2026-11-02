@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { ProviderError } from "@/lib/ai";
 import { replyToChat } from "@/lib/engine/chat";
+import { processQueue } from "@/lib/engine/queue";
 import { rateLimit } from "@/lib/server/rateLimit";
 import { createEngineDeps, engineConfigOrResponse, missingKeyResponse, requireUser, tooMany } from "@/lib/server/context";
 
@@ -46,7 +47,14 @@ export async function POST(req: Request) {
     const deps = createEngineDeps(cfg.config, "chat");
     const provider = await deps.getProvider("anthropic", user.id);
     const out = await replyToChat({ store: deps.store, provider }, { ownerId: user.id, employeeId, conversationId });
-    return NextResponse.json({ conversationId, reply: out.reply });
+    // Tasks the employee created from this message start running right away, in the background.
+    if (out.createdTaskIds.length) {
+      after(async () => {
+        try { await processQueue(deps, { ownerId: user.id, maxTasks: 5, budgetMs: 200_000 }); }
+        catch (e) { console.error("[chat] background run failed:", e instanceof Error ? e.message : e); }
+      });
+    }
+    return NextResponse.json({ conversationId, reply: out.reply, createdTasks: out.createdTaskIds.length });
   } catch (e) {
     const pe = e instanceof ProviderError ? e : new ProviderError(e instanceof Error ? e.message : String(e), "unknown", false);
     // The CEO's message is saved; the reply failed. Say so plainly.

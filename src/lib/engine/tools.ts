@@ -12,7 +12,7 @@ export interface ToolContext {
   employee: EmployeeRecord;
   /** Present when running a task; absent in chat. */
   task: TaskRecord | null;
-  counters: { memories: number; delegations: number };
+  counters: { memories: number; delegations: number; createdTaskIds?: string[] };
 }
 
 export interface ToolResult {
@@ -23,6 +23,8 @@ export interface ToolResult {
 export interface ToolDef {
   /** The grant slug in `employee_tools` that unlocks this tool ("*" = always available). */
   grant: string;
+  /** Also offered in chat (side-effect tools are otherwise task-only). Only for low-risk, reversible actions. */
+  chat?: boolean;
   spec: Extract<ToolSpec, { kind: "function" }>;
   schema: z.ZodType<Record<string, unknown>>;
   approval?: { actionType: ApprovalActionType; describe: (input: Record<string, unknown>) => string };
@@ -131,6 +133,52 @@ const delegateTask: ToolDef = {
   },
 };
 
+const createTask: ToolDef = {
+  grant: "task_router",
+  chat: true,
+  spec: {
+    kind: "function",
+    name: "create_task",
+    description:
+      "Create a task for a colleague (use their slug from the roster). Use this when the CEO asks for work that someone else should do. The task is queued and runs separately; you will not see its result in this conversation. Tasks are visible to the CEO, who can pause or cancel them.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        employee: { type: "string", description: "Slug of the colleague who should do the work." },
+        title: { type: "string", description: "Short imperative title." },
+        description: { type: "string", description: "Everything the colleague needs: goal, context, constraints, deadline." },
+        priority: { type: "string", enum: ["low", "normal", "high", "urgent"] },
+      },
+      required: ["employee", "title"],
+    },
+  },
+  schema: z.object({
+    employee: z.string().trim().min(1).max(64),
+    title: z.string().trim().min(1).max(200),
+    description: z.string().trim().max(20000).default(""),
+    priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
+  }),
+  async execute(ctx, input) {
+    if (ctx.counters.delegations >= MAX_DELEGATIONS_PER_RUN)
+      return { content: `Task limit reached (${MAX_DELEGATIONS_PER_RUN} per message). Ask the CEO to confirm before creating more.`, isError: true };
+    // Scoped to the same company, so another CEO's employees are unreachable.
+    const target = await ctx.store.getEmployeeBySlug(ctx.employee.ownerId, input.employee as string);
+    if (!target) return { content: `No employee with slug "${input.employee}".`, isError: true };
+    if (target.id === ctx.employee.id) return { content: "Do not assign tasks to yourself in chat; answer directly instead.", isError: true };
+    const id = await ctx.store.createTask({
+      ownerId: ctx.employee.ownerId,
+      employeeId: target.id,
+      parentTaskId: ctx.task?.id ?? null,
+      title: input.title as string,
+      description: `Requested by the CEO via ${ctx.employee.name} (${ctx.employee.title}).\n\n${input.description as string}`.trim(),
+      priority: input.priority as "normal",
+    });
+    ctx.counters.delegations++;
+    (ctx.counters.createdTaskIds ??= []).push(id);
+    return { content: `Task created for ${target.name} (id ${id}). It is queued and will start shortly.` };
+  },
+};
+
 const gated = (
   grant: string, name: string, description: string,
   props: Record<string, unknown>, required: string[], schema: z.ZodType<Record<string, unknown>>,
@@ -168,7 +216,7 @@ const refund = gated(
   (i) => `Refund $${i.amount_usd} on order ${i.order_id}: ${i.reason}`,
 );
 
-export const TOOL_DEFS: readonly ToolDef[] = [saveMemory, delegateTask, publishSocial, bulkEmail, refund];
+export const TOOL_DEFS: readonly ToolDef[] = [saveMemory, delegateTask, createTask, publishSocial, bulkEmail, refund];
 
 /** Anthropic-executed web search. Added only for employees granted `web_search`. */
 export const WEB_SEARCH_SPEC: ToolSpec = {
@@ -193,7 +241,7 @@ export function resolveTools(grants: ToolGrant[], opts: { chat?: boolean } = {})
   const defs = new Map<string, ToolDef>();
   const specs: ToolSpec[] = [];
   for (const d of TOOL_DEFS) {
-    if (opts.chat && d.grant !== "*") continue; // chat: memory only, no side effects
+    if (opts.chat && d.grant !== "*" && !d.chat) continue; // chat: memory + low-risk task creation only
     if (d.grant === "*" || granted.has(d.grant)) {
       defs.set(d.spec.name, d);
       specs.push(d.spec);

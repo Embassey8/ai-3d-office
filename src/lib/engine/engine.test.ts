@@ -336,16 +336,17 @@ describe("chat", () => {
     const s = chatSetup(() => reply("Halfway through, found 3 issues."));
     const out = await replyToChat({ store: s.store, provider: s.provider }, { ownerId: OWNER, employeeId: "e-seo", conversationId: "c1" });
     expect(out.reply).toBe("Halfway through, found 3 issues.");
-    expect(s.store.assistantMessages).toEqual([{ conversationId: "c1", content: "Halfway through, found 3 issues." }]);
+    expect(s.store.assistantMessages).toHaveLength(1);
+    expect(s.store.assistantMessages[0]).toMatchObject({ conversationId: "c1", content: "Halfway through, found 3 issues." });
     expect(s.store.employees.get("e-seo")!.status).toBe("idle");
     expect(s.store.statusHistory.map((h) => h.status)).toEqual(["thinking", "idle"]);
     expect(JSON.stringify(s.provider.requests[0].messages)).toContain("How is the audit going?");
   });
 
-  it("offers only the memory tool in chat — no side-effect tools", async () => {
+  it("offers only memory and low-risk task creation in chat — never publishing, email, refunds or web access", async () => {
     const s = chatSetup(() => reply("ok"));
     await replyToChat({ store: s.store, provider: s.provider }, { ownerId: OWNER, employeeId: "e-seo", conversationId: "c1" });
-    expect(s.provider.requests[0].tools.map((t) => t.name)).toEqual(["save_memory"]);
+    expect(s.provider.requests[0].tools.map((t) => t.name).sort()).toEqual(["create_task", "save_memory"]);
   });
 
   it("does not touch the status of an employee who is busy, and surfaces provider errors", async () => {
@@ -388,5 +389,53 @@ describe("API key resolution", () => {
     s.deps.getProvider = async (_n, ownerId) => { seen.push(ownerId); return s.p; };
     await runTask(s.deps, await claim(s));
     expect(seen).toEqual([OWNER]);
+  });
+});
+
+describe("chat: creating tasks for colleagues (Ada)", () => {
+  const adaSetup = (script: ConstructorParameters<typeof FakeProvider>[0], grants: ToolGrant[] = [grant("task_router")]) => {
+    const s = setup(grants);
+    s.store.history.set("c1", [{ role: "user", content: "Get Kai to fix the pricing bug" }]);
+    return { ...s, provider: new FakeProvider(script) };
+  };
+  const run = (s: ReturnType<typeof adaSetup>) => replyToChat({ store: s.store, provider: s.provider }, { ownerId: OWNER, employeeId: "e-seo", conversationId: "c1" });
+  const wantsTask = (input: Record<string, unknown>) => (r: { messages: unknown }, n: number) =>
+    JSON.stringify(r.messages).includes("tool_result") ? reply("Done — assigned.") : toolCall("create_task", input, `tu_${n}`);
+
+  it("creates a queued task for the named colleague and records it on the reply", async () => {
+    const s = adaSetup(wantsTask({ employee: "dev", title: "Fix pricing bug", description: "NGN rounding", priority: "high" }));
+    const out = await run(s);
+    const task = [...s.store.tasks.values()].find((t) => t.employeeId === "e-dev")!;
+    expect(task).toMatchObject({ title: "Fix pricing bug", status: "queued", priority: "high", ownerId: OWNER, parentTaskId: null });
+    expect(task.description).toContain("Requested by the CEO via");
+    expect(out.createdTaskIds).toEqual([task.id]);
+    expect(s.store.assistantMessages[0].metadata).toMatchObject({ taskIds: [task.id] });
+  });
+
+  it("tells the model who it can assign to (not itself) and offers the tool only with the grant", async () => {
+    const withGrant = adaSetup(() => reply("ok"));
+    await run(withGrant);
+    const req = withGrant.provider.requests[0];
+    expect(req.tools.map((t) => t.name)).toEqual(expect.arrayContaining(["save_memory", "create_task"]));
+    expect(req.system).toContain("dev: Kenji");
+    expect(req.system).not.toContain("seo: ");
+    const without = adaSetup(() => reply("ok"), []);
+    await run(without);
+    expect(without.provider.requests[0].tools.map((t) => t.name)).toEqual(["save_memory"]);
+    expect(without.provider.requests[0].system).not.toContain("create_task");
+  });
+
+  it("refuses self-assignment, unknown slugs and other companies' employees", async () => {
+    for (const slug of ["seo", "nobody", "spy"]) {
+      const s = adaSetup(wantsTask({ employee: slug, title: "x" }));
+      await run(s);
+      expect([...s.store.tasks.values()]).toHaveLength(0);
+    }
+  });
+
+  it("limits how many tasks one message can create", async () => {
+    const s = adaSetup((_r, n) => (n <= 5 ? toolCall("create_task", { employee: "dev", title: `t${n}` }, `tu_${n}`) : reply("done")));
+    await run(s).catch(() => {});
+    expect([...s.store.tasks.values()].filter((t) => t.employeeId === "e-dev").length).toBe(3);
   });
 });
